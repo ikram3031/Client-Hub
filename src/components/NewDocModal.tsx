@@ -76,16 +76,16 @@ export const NewDocModal: React.FC<NewDocModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-4 animate-in fade-in">
-      <div className="w-full max-w-xl bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl overflow-hidden font-sans">
+      <div className="w-full max-w-xl theme-bg-card border theme-border rounded-2xl shadow-2xl overflow-hidden font-sans">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-800 bg-zinc-950">
-          <div className="flex items-center gap-2 text-zinc-100 font-bold text-base">
-            <FileText className="w-4 h-4 text-emerald-400" />
+        <div className="flex items-center justify-between px-6 py-4 border-b theme-border theme-bg-secondary">
+          <div className="flex items-center gap-2 theme-text-primary font-bold text-base">
+            <FileText className="w-4 h-4 text-emerald-500" />
             <span>Create New Document</span>
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded-lg text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800 transition-colors"
+            className="p-1 rounded-lg theme-text-muted hover:theme-text-primary theme-bg-hover transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
@@ -102,13 +102,13 @@ export const NewDocModal: React.FC<NewDocModalProps> = ({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-[11px] font-semibold text-zinc-400 mb-1 uppercase font-mono">
+              <label className="block text-[11px] font-semibold theme-text-muted mb-1 uppercase font-mono">
                 Category
               </label>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-3 py-2 text-zinc-200 focus:outline-none focus:border-emerald-500"
+                className="w-full theme-bg-primary border theme-border rounded-lg px-3 py-2 theme-text-primary focus:outline-none"
               >
                 {categories.map((c) => (
                   <option key={c} value={c}>
@@ -119,21 +119,21 @@ export const NewDocModal: React.FC<NewDocModalProps> = ({
             </div>
 
             <div>
-              <label className="block text-[11px] font-semibold text-zinc-400 mb-1 uppercase font-mono">
+              <label className="block text-[11px] font-semibold theme-text-muted mb-1 uppercase font-mono">
                 Slug (URL Identifier)
               </label>
               <input
                 type="text"
                 value={slug}
                 onChange={(e) => setSlug(e.target.value)}
-                className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-3 py-2 text-zinc-200 font-mono focus:outline-none focus:border-emerald-500"
+                className="w-full theme-bg-primary border theme-border rounded-lg px-3 py-2 theme-text-primary font-mono focus:outline-none"
                 required
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-[11px] font-semibold text-zinc-400 mb-1 uppercase font-mono">
+            <label className="block text-[11px] font-semibold theme-text-muted mb-1 uppercase font-mono">
               Document Title
             </label>
             <input
@@ -141,28 +141,28 @@ export const NewDocModal: React.FC<NewDocModalProps> = ({
               placeholder="e.g. D1 Database Clustering"
               value={title}
               onChange={(e) => handleTitleChange(e.target.value)}
-              className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-3 py-2 text-zinc-200 text-sm font-semibold focus:outline-none focus:border-emerald-500"
+              className="w-full theme-bg-primary border theme-border rounded-lg px-3 py-2 theme-text-primary text-sm font-semibold focus:outline-none"
               required
             />
           </div>
 
           <div>
-            <label className="block text-[11px] font-semibold text-zinc-400 mb-1 uppercase font-mono">
+            <label className="block text-[11px] font-semibold theme-text-muted mb-1 uppercase font-mono">
               Initial Markdown Content
             </label>
             <textarea
               rows={6}
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              className="w-full bg-zinc-950 border border-zinc-700 rounded-lg p-3 text-zinc-200 font-mono text-xs focus:outline-none focus:border-emerald-500"
+              className="w-full theme-bg-primary border theme-border rounded-lg p-3 theme-text-primary font-mono text-xs focus:outline-none"
             />
           </div>
 
-          <div className="flex justify-end gap-2 pt-2 border-t border-zinc-800">
+          <div className="flex justify-end gap-2 pt-2 border-t theme-border">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-lg text-zinc-400 hover:text-white transition-colors"
+              className="px-4 py-2 rounded-lg theme-text-muted hover:theme-text-primary transition-colors"
             >
               Cancel
             </button>

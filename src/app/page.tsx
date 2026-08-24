@@ -19,7 +19,7 @@ import { ProjectOverview } from "@/components/ProjectOverview";
 import { NewDocModal } from "@/components/NewDocModal";
 import { NewProjectModal } from "@/components/NewProjectModal";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { Database, Sparkles, Terminal, BookOpen, Layers, Menu, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 
 // Main Hub Page layout connecting hierarchical sidebar tree with dynamic content viewports
 const HomePage: React.FC = () => {
@@ -131,7 +131,7 @@ const HomePage: React.FC = () => {
       : null;
 
   return (
-    <div className="flex h-screen w-screen bg-black text-zinc-100 overflow-hidden font-sans select-none">
+    <div className="flex h-screen w-screen theme-bg-primary theme-text-primary overflow-hidden font-sans select-none">
       {/* Left Sidebar Tree */}
       <div
         className={`${
@@ -158,30 +158,30 @@ const HomePage: React.FC = () => {
       </div>
 
       {/* Main Container */}
-      <div className="flex-1 flex flex-col h-full overflow-hidden bg-zinc-950">
+      <div className="flex-1 flex flex-col h-full overflow-hidden theme-bg-primary">
         {/* Top Navigation Bar */}
-        <header className="h-13 px-4 md:px-8 border-b border-zinc-800/80 bg-zinc-950/80 backdrop-blur-md flex items-center justify-between shrink-0 z-10">
+        <header className="h-13 px-4 md:px-8 border-b theme-border theme-bg-secondary flex items-center justify-between shrink-0 z-10">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-300"
+              className="md:hidden p-1.5 rounded-lg theme-bg-card border theme-border theme-text-primary"
             >
               {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
             </button>
             <div className="flex items-center gap-2">
-              <span className="font-extrabold text-sm tracking-tight text-white flex items-center gap-1.5">
+              <span className="font-extrabold text-sm tracking-tight theme-text-primary flex items-center gap-1.5">
                 <span className="text-base">📖</span> docsNlogs
               </span>
-              <span className="text-zinc-600">/</span>
-              <span className="text-xs font-semibold text-emerald-400 font-mono">
+              <span className="theme-text-muted">/</span>
+              <span className="text-xs font-semibold theme-accent font-mono">
                 {activeProject.name}
               </span>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-zinc-900 border border-zinc-800 text-[11px] text-zinc-400">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full theme-bg-card border theme-border text-[11px] theme-text-muted">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
               <span>D1 Edge Live</span>
             </div>
             <ThemeToggle />
@@ -191,8 +191,8 @@ const HomePage: React.FC = () => {
         {/* Viewport Content */}
         <main className="flex-1 flex flex-col h-full overflow-hidden">
           {isLoading ? (
-            <div className="flex-1 flex flex-col items-center justify-center text-zinc-500 gap-3">
-              <div className="w-8 h-8 rounded-full border-2 border-emerald-500/30 border-t-emerald-500 animate-spin" />
+            <div className="flex-1 flex flex-col items-center justify-center theme-text-muted gap-3">
+              <div className="w-8 h-8 rounded-full border-2 theme-accent-border border-t-emerald-500 animate-spin" />
               <span className="text-xs font-mono">Syncing with Cloudflare D1...</span>
             </div>
           ) : (

@@ -77,7 +77,6 @@ export const SidebarTree: React.FC<SidebarTreeProps> = ({
       d.category.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
-    // Ensure all standard categories exist in map
     const activeProj = projects.find((p) => p.slug === activeProjectSlug);
     const categories = activeProj?.docs_categories || ["Architecture", "Backend", "Frontend", "Dashboard"];
 
@@ -99,23 +98,23 @@ export const SidebarTree: React.FC<SidebarTreeProps> = ({
   const activeProj = projects.find((p) => p.slug === activeProjectSlug);
 
   return (
-    <aside className="w-72 md:w-80 h-full flex flex-col bg-zinc-900 border-r border-zinc-800 text-zinc-300 select-none">
+    <aside className="w-72 md:w-80 h-full flex flex-col theme-bg-secondary border-r theme-border theme-text-secondary select-none">
       {/* 1. Projects Root Header */}
-      <div className="p-3.5 border-b border-zinc-800 bg-zinc-950/70">
+      <div className="p-3.5 border-b theme-border theme-bg-primary">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
-            <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            <div className="p-1.5 rounded-lg theme-accent-bg theme-accent border theme-accent-border">
               <Layers className="w-4 h-4" />
             </div>
             <div>
-              <span className="text-xs uppercase tracking-wider font-semibold text-zinc-400">All Projects</span>
-              <p className="text-[11px] text-zinc-500">{projects.length} Registered</p>
+              <span className="text-xs uppercase tracking-wider font-semibold theme-text-muted">All Projects</span>
+              <p className="text-[11px] theme-text-muted">{projects.length} Registered</p>
             </div>
           </div>
 
           <button
             onClick={onOpenNewProjectModal}
-            className="flex items-center gap-1 px-2 py-1 text-xs font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white rounded-md border border-zinc-700/80 transition-all cursor-pointer"
+            className="flex items-center gap-1 px-2 py-1 text-xs font-medium theme-bg-card theme-bg-hover theme-text-primary rounded-md border theme-border transition-all cursor-pointer shadow-xs"
             title="Onboard New Project"
           >
             <Plus className="w-3.5 h-3.5" />
@@ -127,7 +126,7 @@ export const SidebarTree: React.FC<SidebarTreeProps> = ({
         <select
           value={activeProjectSlug}
           onChange={(e) => onSelectProject(e.target.value)}
-          className="w-full text-xs font-medium bg-zinc-900 border border-zinc-700/80 rounded-lg px-2.5 py-1.5 text-zinc-200 focus:outline-none focus:border-emerald-500/80 cursor-pointer"
+          className="w-full text-xs font-medium theme-bg-secondary border theme-border rounded-lg px-2.5 py-1.5 theme-text-primary focus:outline-none cursor-pointer"
         >
           {projects.map((p) => (
             <option key={p.slug} value={p.slug}>
@@ -138,15 +137,15 @@ export const SidebarTree: React.FC<SidebarTreeProps> = ({
       </div>
 
       {/* 2. Quick Search */}
-      <div className="px-3 pt-3 pb-2 border-b border-zinc-800/60">
+      <div className="px-3 pt-3 pb-2 border-b theme-border">
         <div className="relative flex items-center">
-          <Search className="w-3.5 h-3.5 text-zinc-500 absolute left-2.5 pointer-events-none" />
+          <Search className="w-3.5 h-3.5 theme-text-muted absolute left-2.5 pointer-events-none" />
           <input
             type="text"
             placeholder="Search docs, features, tags..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full text-xs bg-zinc-950/60 border border-zinc-800 rounded-md pl-8 pr-2.5 py-1.5 text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:border-emerald-500/50"
+            className="w-full text-xs theme-bg-primary border theme-border rounded-md pl-8 pr-2.5 py-1.5 theme-text-primary placeholder:opacity-50 focus:outline-none"
           />
         </div>
       </div>
@@ -156,17 +155,17 @@ export const SidebarTree: React.FC<SidebarTreeProps> = ({
         {/* Project Root Node */}
         <div
           onClick={() => onSelect({ type: "project-overview", projectSlug: activeProjectSlug })}
-          className={`flex items-center justify-between px-2 py-1.5 rounded-lg cursor-pointer transition-all ${
+          className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg cursor-pointer transition-all ${
             currentSelection.type === "project-overview"
-              ? "bg-emerald-500/15 text-emerald-400 font-medium border border-emerald-500/20"
-              : "hover:bg-zinc-800/60 text-zinc-200"
+              ? "theme-accent-bg theme-accent font-medium border theme-accent-border"
+              : "theme-bg-hover theme-text-primary"
           }`}
         >
           <div className="flex items-center gap-2 truncate">
             <span className="text-base">📦</span>
             <span className="font-semibold truncate">{activeProj?.name || activeProjectSlug}</span>
           </div>
-          <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 font-mono">root</span>
+          <span className="text-[10px] px-1.5 py-0.5 rounded theme-bg-accent theme-text-muted font-mono">root</span>
         </div>
 
         {/* --- SECTION A: DOCs Tree --- */}
@@ -174,18 +173,18 @@ export const SidebarTree: React.FC<SidebarTreeProps> = ({
           {/* Root DOCs Folder */}
           <div
             onClick={() => toggleFolder("docs_root")}
-            className="flex items-center justify-between px-2 py-1 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/40 rounded-md cursor-pointer transition-colors"
+            className="flex items-center justify-between px-2 py-1 theme-text-secondary theme-bg-hover rounded-md cursor-pointer transition-colors"
           >
             <div className="flex items-center gap-1.5 font-medium">
               {expandedFolders.docs_root ? (
-                <ChevronDown className="w-3.5 h-3.5 text-zinc-500" />
+                <ChevronDown className="w-3.5 h-3.5 theme-text-muted" />
               ) : (
-                <ChevronRight className="w-3.5 h-3.5 text-zinc-500" />
+                <ChevronRight className="w-3.5 h-3.5 theme-text-muted" />
               )}
               {expandedFolders.docs_root ? (
-                <FolderOpen className="w-4 h-4 text-amber-400" />
+                <FolderOpen className="w-4 h-4 text-amber-500" />
               ) : (
-                <Folder className="w-4 h-4 text-amber-400" />
+                <Folder className="w-4 h-4 text-amber-500" />
               )}
               <span>DOCs</span>
             </div>
@@ -195,7 +194,7 @@ export const SidebarTree: React.FC<SidebarTreeProps> = ({
                 e.stopPropagation();
                 onOpenNewDocModal();
               }}
-              className="p-1 hover:bg-zinc-700/60 rounded text-zinc-400 hover:text-white"
+              className="p-1 theme-bg-hover rounded theme-text-muted hover:theme-text-primary"
               title="Add New Document"
             >
               <Plus className="w-3 h-3" />
@@ -204,7 +203,7 @@ export const SidebarTree: React.FC<SidebarTreeProps> = ({
 
           {/* Nested Categories and Docs */}
           {expandedFolders.docs_root && (
-            <div className="pl-4 space-y-1 border-l border-zinc-800/80 ml-3.5 my-1">
+            <div className="pl-4 space-y-1 border-l theme-border ml-3.5 my-1">
               {Object.entries(docsByCategory).map(([category, catDocs]) => {
                 const isCatExpanded = !!expandedFolders[category];
                 const isCatSelected =
@@ -218,14 +217,14 @@ export const SidebarTree: React.FC<SidebarTreeProps> = ({
                       onClick={() => onSelect({ type: "folder-overview", projectSlug: activeProjectSlug, category })}
                       className={`group flex items-center justify-between px-2 py-1 rounded-md cursor-pointer transition-all ${
                         isCatSelected
-                          ? "bg-amber-500/15 text-amber-300 font-medium"
-                          : "hover:bg-zinc-800/50 text-zinc-300"
+                          ? "bg-amber-500/15 text-amber-600 dark:text-amber-300 font-medium"
+                          : "theme-bg-hover theme-text-secondary"
                       }`}
                     >
                       <div className="flex items-center gap-1.5 truncate">
                         <button
                           onClick={(e) => toggleFolder(category, e)}
-                          className="p-0.5 text-zinc-500 hover:text-zinc-300 rounded"
+                          className="p-0.5 theme-text-muted hover:theme-text-primary rounded"
                         >
                           {isCatExpanded ? (
                             <ChevronDown className="w-3 h-3" />
@@ -234,15 +233,15 @@ export const SidebarTree: React.FC<SidebarTreeProps> = ({
                           )}
                         </button>
                         {isCatExpanded ? (
-                          <FolderOpen className="w-3.5 h-3.5 text-amber-400/80 shrink-0" />
+                          <FolderOpen className="w-3.5 h-3.5 text-amber-500 shrink-0" />
                         ) : (
-                          <Folder className="w-3.5 h-3.5 text-amber-400/80 shrink-0" />
+                          <Folder className="w-3.5 h-3.5 text-amber-500 shrink-0" />
                         )}
                         <span className="truncate">{category}</span>
                       </div>
 
                       <div className="flex items-center gap-1">
-                        <span className="text-[10px] text-zinc-500 group-hover:hidden">
+                        <span className="text-[10px] theme-text-muted group-hover:hidden">
                           {catDocs.length}
                         </span>
                         <button
@@ -250,7 +249,7 @@ export const SidebarTree: React.FC<SidebarTreeProps> = ({
                             e.stopPropagation();
                             onOpenNewDocModal(category);
                           }}
-                          className="hidden group-hover:flex p-0.5 rounded hover:bg-zinc-700 text-zinc-400 hover:text-white"
+                          className="hidden group-hover:flex p-0.5 rounded theme-bg-hover theme-text-muted hover:theme-text-primary"
                           title={`Add doc in ${category}`}
                         >
                           <Plus className="w-3 h-3" />
@@ -260,7 +259,7 @@ export const SidebarTree: React.FC<SidebarTreeProps> = ({
 
                     {/* Docs inside Category */}
                     {isCatExpanded && catDocs.length > 0 && (
-                      <div className="pl-4 space-y-0.5 border-l border-zinc-800/60 ml-3 my-0.5">
+                      <div className="pl-4 space-y-0.5 border-l theme-border ml-3 my-0.5">
                         {catDocs.map((doc) => {
                           const isDocSelected =
                             currentSelection.type === "doc" &&
@@ -278,11 +277,11 @@ export const SidebarTree: React.FC<SidebarTreeProps> = ({
                               }
                               className={`flex items-center gap-1.5 px-2 py-1 rounded-md cursor-pointer text-[11px] transition-all ${
                                 isDocSelected
-                                  ? "bg-emerald-500/20 text-emerald-300 font-medium border border-emerald-500/30"
-                                  : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/40"
+                                  ? "theme-accent-bg theme-accent font-semibold border theme-accent-border"
+                                  : "theme-text-muted hover:theme-text-primary theme-bg-hover"
                               }`}
                             >
-                              <FileText className="w-3 h-3 shrink-0 text-zinc-500" />
+                              <FileText className="w-3 h-3 shrink-0 theme-text-muted" />
                               <span className="truncate">{doc.title}</span>
                             </div>
                           );
@@ -300,22 +299,22 @@ export const SidebarTree: React.FC<SidebarTreeProps> = ({
         <div className="space-y-1 pt-1">
           <div
             onClick={() => toggleFolder("features_root")}
-            className="flex items-center justify-between px-2 py-1 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/40 rounded-md cursor-pointer transition-colors"
+            className="flex items-center justify-between px-2 py-1 theme-text-secondary theme-bg-hover rounded-md cursor-pointer transition-colors"
           >
             <div className="flex items-center gap-1.5 font-medium">
               {expandedFolders.features_root ? (
-                <ChevronDown className="w-3.5 h-3.5 text-zinc-500" />
+                <ChevronDown className="w-3.5 h-3.5 theme-text-muted" />
               ) : (
-                <ChevronRight className="w-3.5 h-3.5 text-zinc-500" />
+                <ChevronRight className="w-3.5 h-3.5 theme-text-muted" />
               )}
-              <Sparkles className="w-4 h-4 text-cyan-400" />
+              <Sparkles className="w-4 h-4 text-cyan-500" />
               <span>Features & Epics</span>
             </div>
-            <span className="text-[10px] text-zinc-500">{features.length}</span>
+            <span className="text-[10px] theme-text-muted">{features.length}</span>
           </div>
 
           {expandedFolders.features_root && (
-            <div className="pl-4 space-y-1 border-l border-zinc-800/80 ml-3.5 my-1">
+            <div className="pl-4 space-y-1 border-l theme-border ml-3.5 my-1">
               {features.map((feat) => {
                 const isFeatSelected =
                   currentSelection.type === "logs" &&
@@ -333,20 +332,20 @@ export const SidebarTree: React.FC<SidebarTreeProps> = ({
                       }
                       className={`flex items-center justify-between px-2 py-1 rounded-md cursor-pointer text-[11px] transition-all ${
                         isFeatSelected
-                          ? "bg-cyan-500/20 text-cyan-300 font-medium border border-cyan-500/30"
-                          : "text-zinc-300 hover:bg-zinc-800/40 hover:text-white"
+                          ? "bg-cyan-500/20 text-cyan-600 dark:text-cyan-300 font-medium border border-cyan-500/30"
+                          : "theme-text-secondary theme-bg-hover hover:theme-text-primary"
                       }`}
                     >
                       <div className="flex items-center gap-1.5 truncate">
-                        <span className="font-mono text-[10px] px-1 py-0.2 rounded bg-cyan-950 text-cyan-400 border border-cyan-800/50">
+                        <span className="font-mono text-[10px] px-1 py-0.2 rounded theme-bg-card text-cyan-500 border theme-border">
                           {feat.key}
                         </span>
                         <span className="truncate">{feat.title}</span>
                       </div>
                       {feat.status === "done" ? (
-                        <CheckCircle2 className="w-3 h-3 text-emerald-400 shrink-0" />
+                        <CheckCircle2 className="w-3 h-3 text-emerald-500 shrink-0" />
                       ) : (
-                        <Clock className="w-3 h-3 text-amber-400 shrink-0" />
+                        <Clock className="w-3 h-3 text-amber-500 shrink-0" />
                       )}
                     </div>
                   </div>
@@ -362,23 +361,23 @@ export const SidebarTree: React.FC<SidebarTreeProps> = ({
             onClick={() => onSelect({ type: "logs", projectSlug: activeProjectSlug })}
             className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg cursor-pointer text-xs transition-all ${
               currentSelection.type === "logs" && !currentSelection.featureKey
-                ? "bg-purple-500/20 text-purple-300 font-medium border border-purple-500/30"
-                : "text-zinc-300 hover:bg-zinc-800/60 hover:text-white"
+                ? "bg-purple-500/20 text-purple-600 dark:text-purple-300 font-medium border border-purple-500/30"
+                : "theme-text-secondary theme-bg-hover hover:theme-text-primary"
             }`}
           >
-            <Terminal className="w-4 h-4 text-purple-400" />
+            <Terminal className="w-4 h-4 text-purple-500" />
             <span className="font-medium">AI Action Logs Stream</span>
           </div>
         </div>
       </div>
 
       {/* 4. Bottom Footer Info */}
-      <div className="p-3 border-t border-zinc-800/80 bg-zinc-950 text-[11px] text-zinc-500 flex items-center justify-between">
+      <div className="p-3 border-t theme-border theme-bg-primary text-[11px] theme-text-muted flex items-center justify-between">
         <div className="flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
           <span>Cloudflare D1 Live</span>
         </div>
-        <span className="font-mono text-[10px] text-zinc-400">v0.1.0</span>
+        <span className="font-mono text-[10px] theme-text-muted">v0.1.0</span>
       </div>
     </aside>
   );

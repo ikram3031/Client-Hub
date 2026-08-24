@@ -97,15 +97,15 @@ export const LogViewer: React.FC<LogViewerProps> = ({
   const scopes = ["all", "architecture", "backend", "frontend", "dashboard"];
 
   return (
-    <div className="flex-1 flex flex-col h-full overflow-y-auto bg-zinc-950 text-zinc-100 p-6 md:p-10 font-sans">
+    <div className="flex-1 flex flex-col h-full overflow-y-auto theme-bg-primary theme-text-primary p-6 md:p-10 font-sans">
       {/* 1. Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 mb-6 border-b border-zinc-800/80">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 mb-6 border-b theme-border">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <div className="p-2 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20">
+            <div className="p-2 rounded-xl bg-purple-500/10 text-purple-500 border border-purple-500/20">
               <Terminal className="w-5 h-5" />
             </div>
-            <h1 className="text-2xl font-extrabold tracking-tight text-white">
+            <h1 className="text-2xl font-extrabold tracking-tight theme-text-primary">
               AI Action Logs
             </h1>
             {featureKey && (
@@ -114,7 +114,7 @@ export const LogViewer: React.FC<LogViewerProps> = ({
               </span>
             )}
           </div>
-          <p className="text-xs text-zinc-400">
+          <p className="text-xs theme-text-muted">
             Real-time audit log of code modifications, AI prompts, file diffs, and Git commits
           </p>
         </div>
@@ -122,7 +122,7 @@ export const LogViewer: React.FC<LogViewerProps> = ({
         <div className="flex items-center gap-2">
           <button
             onClick={onRefresh}
-            className="p-2 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-lg border border-zinc-800 transition-all cursor-pointer"
+            className="p-2 theme-text-muted hover:theme-text-primary theme-bg-card hover:theme-bg-hover rounded-lg border theme-border transition-all cursor-pointer shadow-xs"
             title="Refresh Logs"
           >
             <RefreshCw className="w-4 h-4" />
@@ -141,16 +141,16 @@ export const LogViewer: React.FC<LogViewerProps> = ({
       {showQuickLog && (
         <form
           onSubmit={handleQuickSubmit}
-          className="mb-6 p-5 rounded-2xl border border-purple-500/30 bg-purple-950/10 space-y-4 text-xs font-sans animate-in fade-in"
+          className="mb-6 p-5 rounded-2xl border border-purple-500/30 bg-purple-500/5 space-y-4 text-xs font-sans animate-in fade-in"
         >
-          <h3 className="font-semibold text-purple-300 text-sm">Record Action Log</h3>
+          <h3 className="font-semibold text-purple-500 text-sm">Record Action Log</h3>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
-              <label className="block text-[11px] font-semibold text-zinc-400 mb-1">Scope</label>
+              <label className="block text-[11px] font-semibold theme-text-muted mb-1">Scope</label>
               <select
                 value={logScope}
                 onChange={(e) => setLogScope(e.target.value)}
-                className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-zinc-200"
+                className="w-full theme-bg-card border theme-border rounded-lg px-2.5 py-1.5 theme-text-primary"
               >
                 <option value="frontend">Frontend</option>
                 <option value="backend">Backend</option>
@@ -159,11 +159,11 @@ export const LogViewer: React.FC<LogViewerProps> = ({
               </select>
             </div>
             <div>
-              <label className="block text-[11px] font-semibold text-zinc-400 mb-1">Action</label>
+              <label className="block text-[11px] font-semibold theme-text-muted mb-1">Action</label>
               <select
                 value={logAction}
                 onChange={(e) => setLogAction(e.target.value)}
-                className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-zinc-200"
+                className="w-full theme-bg-card border theme-border rounded-lg px-2.5 py-1.5 theme-text-primary"
               >
                 <option value="feature">Feature</option>
                 <option value="bugfix">Bugfix</option>
@@ -172,25 +172,25 @@ export const LogViewer: React.FC<LogViewerProps> = ({
               </select>
             </div>
             <div>
-              <label className="block text-[11px] font-semibold text-zinc-400 mb-1">Changed Files</label>
+              <label className="block text-[11px] font-semibold theme-text-muted mb-1">Changed Files</label>
               <input
                 type="text"
                 placeholder="src/app/page.tsx, server/d1.ts"
                 value={logFiles}
                 onChange={(e) => setLogFiles(e.target.value)}
-                className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-zinc-200"
+                className="w-full theme-bg-card border theme-border rounded-lg px-2.5 py-1.5 theme-text-primary"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-[11px] font-semibold text-zinc-400 mb-1">Summary</label>
+            <label className="block text-[11px] font-semibold theme-text-muted mb-1">Summary</label>
             <input
               type="text"
               placeholder="e.g. Implemented direct copy button on code blocks"
               value={logSummary}
               onChange={(e) => setLogSummary(e.target.value)}
-              className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-1.5 text-zinc-200 focus:outline-none focus:border-purple-500"
+              className="w-full theme-bg-card border theme-border rounded-lg px-3 py-1.5 theme-text-primary focus:outline-none"
               required
             />
           </div>
@@ -199,7 +199,7 @@ export const LogViewer: React.FC<LogViewerProps> = ({
             <button
               type="button"
               onClick={() => setShowQuickLog(false)}
-              className="px-3 py-1 text-zinc-400 hover:text-white"
+              className="px-3 py-1 theme-text-muted hover:theme-text-primary"
             >
               Cancel
             </button>
@@ -215,8 +215,8 @@ export const LogViewer: React.FC<LogViewerProps> = ({
       )}
 
       {/* 3. Scope Filters */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-4 mb-4 border-b border-zinc-900">
-        <span className="text-xs text-zinc-500 flex items-center gap-1 font-mono">
+      <div className="flex items-center gap-2 overflow-x-auto pb-4 mb-4 border-b theme-border">
+        <span className="text-xs theme-text-muted flex items-center gap-1 font-mono">
           <Filter className="w-3 h-3" /> Filter:
         </span>
         {scopes.map((s) => (
@@ -225,8 +225,8 @@ export const LogViewer: React.FC<LogViewerProps> = ({
             onClick={() => setActiveScope(s)}
             className={`px-3 py-1 rounded-full text-xs font-medium capitalize transition-all cursor-pointer ${
               activeScope === s
-                ? "bg-purple-500/20 text-purple-300 border border-purple-500/40"
-                : "bg-zinc-900 text-zinc-400 hover:text-zinc-200 border border-zinc-800"
+                ? "bg-purple-500/20 text-purple-600 dark:text-purple-300 border border-purple-500/40"
+                : "theme-bg-card theme-text-muted hover:theme-text-primary border theme-border"
             }`}
           >
             {s}
@@ -236,11 +236,11 @@ export const LogViewer: React.FC<LogViewerProps> = ({
 
       {/* 4. Logs Timeline Stream */}
       {filteredLogs.length === 0 ? (
-        <div className="flex flex-col items-center justify-center p-12 rounded-2xl border border-dashed border-zinc-800 bg-zinc-900/30 text-center">
-          <Terminal className="w-10 h-10 text-zinc-600 mb-3" />
-          <h3 className="text-sm font-semibold text-zinc-300">No action logs found</h3>
-          <p className="text-xs text-zinc-500 mt-1">
-            Run <code className="bg-zinc-800 px-1.5 py-0.5 rounded font-mono text-zinc-300">node scripts/log.js</code> to ingest logs.
+        <div className="flex flex-col items-center justify-center p-12 rounded-2xl border border-dashed theme-border theme-bg-card text-center">
+          <Terminal className="w-10 h-10 theme-text-muted mb-3" />
+          <h3 className="text-sm font-semibold theme-text-primary">No action logs found</h3>
+          <p className="text-xs theme-text-muted mt-1">
+            Run <code className="theme-bg-card px-1.5 py-0.5 rounded font-mono theme-text-primary border theme-border">node scripts/log.js</code> to ingest logs.
           </p>
         </div>
       ) : (
@@ -251,46 +251,46 @@ export const LogViewer: React.FC<LogViewerProps> = ({
             return (
               <div
                 key={log.id}
-                className="p-5 rounded-2xl border border-zinc-800/80 bg-zinc-900/40 hover:bg-zinc-900/80 transition-all shadow-sm"
+                className="p-5 rounded-2xl border theme-border theme-bg-card theme-bg-hover transition-all shadow-xs"
               >
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                   {/* Scope & Action Header */}
                   <div className="flex-1">
                     <div className="flex flex-wrap items-center gap-2 mb-2">
-                      <span className="px-2 py-0.5 rounded-md bg-purple-950 text-purple-300 font-mono text-[10px] uppercase font-bold border border-purple-800/50">
+                      <span className="px-2 py-0.5 rounded-md bg-purple-500/15 text-purple-600 dark:text-purple-300 font-mono text-[10px] uppercase font-bold border border-purple-500/30">
                         {log.scope}
                       </span>
-                      <span className="px-2 py-0.5 rounded-md bg-zinc-800 text-zinc-300 font-mono text-[10px] uppercase">
+                      <span className="px-2 py-0.5 rounded-md theme-bg-secondary theme-text-muted font-mono text-[10px] uppercase border theme-border">
                         {log.action}
                       </span>
                       {log.feature_key && (
-                        <span className="px-2 py-0.5 rounded-md bg-cyan-950 text-cyan-400 font-mono text-[10px] border border-cyan-800/50">
+                        <span className="px-2 py-0.5 rounded-md bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 font-mono text-[10px] border border-cyan-500/30">
                           {log.feature_key}
                         </span>
                       )}
                       {log.commit_id && (
                         <button
                           onClick={() => handleCopy(log.commit_id!, `commit-${log.id}`)}
-                          className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-950/60 hover:bg-emerald-900/60 text-emerald-400 font-mono text-[10px] border border-emerald-800/50 cursor-pointer transition-colors"
+                          className="flex items-center gap-1 px-2 py-0.5 rounded-md theme-accent-bg hover:opacity-80 theme-accent font-mono text-[10px] border theme-accent-border cursor-pointer transition-colors"
                           title="Direct copy Git Commit hash"
                         >
                           <GitCommit className="w-3 h-3" />
                           <span>{log.commit_id.slice(0, 7)}</span>
                           {copiedId === `commit-${log.id}` ? (
-                            <Check className="w-2.5 h-2.5 text-emerald-300" />
+                            <Check className="w-2.5 h-2.5 theme-accent" />
                           ) : (
-                            <Copy className="w-2.5 h-2.5 text-emerald-500/70" />
+                            <Copy className="w-2.5 h-2.5 opacity-70" />
                           )}
                         </button>
                       )}
                     </div>
 
-                    <h3 className="text-sm font-semibold text-zinc-100 leading-snug">
+                    <h3 className="text-sm font-semibold theme-text-primary leading-snug">
                       {log.summary}
                     </h3>
                   </div>
 
-                  <div className="text-[11px] text-zinc-500 font-mono flex items-center gap-1 shrink-0">
+                  <div className="text-[11px] theme-text-muted font-mono flex items-center gap-1 shrink-0">
                     <Clock className="w-3 h-3" />
                     <span>{new Date(log.created_at).toLocaleString()}</span>
                   </div>
@@ -299,18 +299,18 @@ export const LogViewer: React.FC<LogViewerProps> = ({
                 {/* Changed Files List */}
                 {log.changed_files && log.changed_files.length > 0 && (
                   <div className="mt-3 flex flex-wrap items-center gap-1.5">
-                    <span className="text-[10px] text-zinc-500 font-mono">Files:</span>
+                    <span className="text-[10px] theme-text-muted font-mono">Files:</span>
                     {log.changed_files.map((file, idx) => (
                       <button
                         key={idx}
                         onClick={() => handleCopy(file, `file-${log.id}-${idx}`)}
-                        className="flex items-center gap-1 px-2 py-0.5 rounded bg-zinc-800/80 hover:bg-zinc-750 text-zinc-300 text-[11px] font-mono border border-zinc-700/50 transition-colors cursor-pointer"
+                        className="flex items-center gap-1 px-2 py-0.5 rounded theme-bg-secondary theme-text-secondary text-[11px] font-mono border theme-border hover:theme-accent transition-colors cursor-pointer"
                         title="Click to copy file path"
                       >
-                        <FileCode className="w-3 h-3 text-zinc-500" />
+                        <FileCode className="w-3 h-3 theme-text-muted" />
                         <span>{file}</span>
                         {copiedId === `file-${log.id}-${idx}` && (
-                          <Check className="w-2.5 h-2.5 text-emerald-400" />
+                          <Check className="w-2.5 h-2.5 theme-accent" />
                         )}
                       </button>
                     ))}
@@ -319,22 +319,22 @@ export const LogViewer: React.FC<LogViewerProps> = ({
 
                 {/* Prompt Used / More Details Accordion */}
                 {log.prompt_used && (
-                  <div className="mt-3 pt-3 border-t border-zinc-800/60">
+                  <div className="mt-3 pt-3 border-t theme-border">
                     <button
                       onClick={() => toggleExpand(log.id)}
-                      className="flex items-center gap-1 text-[11px] text-zinc-400 hover:text-zinc-200 cursor-pointer transition-colors"
+                      className="flex items-center gap-1 text-[11px] theme-text-muted hover:theme-text-primary cursor-pointer transition-colors"
                     >
                       {isExpanded ? (
-                        <ChevronDown className="w-3 h-3 text-zinc-500" />
+                        <ChevronDown className="w-3 h-3 theme-text-muted" />
                       ) : (
-                        <ChevronRight className="w-3 h-3 text-zinc-500" />
+                        <ChevronRight className="w-3 h-3 theme-text-muted" />
                       )}
-                      <Sparkles className="w-3 h-3 text-amber-400" />
+                      <Sparkles className="w-3 h-3 text-amber-500" />
                       <span>AI Prompt Used</span>
                     </button>
 
                     {isExpanded && (
-                      <div className="mt-2 p-3 rounded-xl bg-zinc-950 border border-zinc-800 text-xs font-mono text-zinc-300 leading-relaxed">
+                      <div className="mt-2 p-3 rounded-xl theme-bg-secondary border theme-border text-xs font-mono theme-text-secondary leading-relaxed">
                         {log.prompt_used}
                       </div>
                     )}

@@ -1,0 +1,14 @@
+﻿{
+  "project": {
+    "name": "docsNlogs",
+    "slug": "docsNlogs",
+    "description": "Centralized AI Documentation and Action Logs Hub"
+  },
+  "hubApiUrl": "http://localhost:5000",
+  "docs": {
+    "categories": ["Architecture", "Backend", "Frontend", "Dashboard"]
+  },
+  "logs": {
+    "scopes": ["architecture", "backend", "frontend", "dashboard"]
+  }
+}

@@ -45,7 +45,7 @@ logRouter.get("/", async (req: Request, res: Response) => {
 logRouter.post("/", async (req: Request, res: Response) => {
   try {
     const projectSlug = req.params.projectSlug as string;
-    const { scope, featureKey, subTaskKey, action, summary, promptUsed, changedFiles, diffSummary } = req.body;
+    const { scope, featureKey, subTaskKey, action, summary, promptUsed, changedFiles, diffSummary, commitId } = req.body;
 
     if (!summary) {
       return res.status(400).json({ success: false, error: "Summary is required" });
@@ -82,8 +82,8 @@ logRouter.post("/", async (req: Request, res: Response) => {
     const cleanFiles = Array.isArray(changedFiles) ? changedFiles : [];
 
     await queryD1(
-      `INSERT INTO logs (id, project_slug, scope, feature_key, sub_task_key, action, summary, prompt_used, changed_files, diff_summary) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [logId, projectSlug, (scope || "backend").toLowerCase(), cleanFeatureKey, cleanSubTaskKey, action || "feature", summary, promptUsed || "", JSON.stringify(cleanFiles), diffSummary || ""]
+      `INSERT INTO logs (id, project_slug, scope, feature_key, sub_task_key, action, summary, prompt_used, changed_files, diff_summary, commit_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [logId, projectSlug, (scope || "backend").toLowerCase(), cleanFeatureKey, cleanSubTaskKey, action || "feature", summary, promptUsed || "", JSON.stringify(cleanFiles), diffSummary || "", commitId || ""]
     );
 
     const created = await queryD1(`SELECT * FROM logs WHERE id = ?`, [logId]);

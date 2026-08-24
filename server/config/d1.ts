@@ -132,9 +132,16 @@ export const initD1Schema = async () => {
       prompt_used TEXT DEFAULT '',
       changed_files TEXT DEFAULT '[]',
       diff_summary TEXT DEFAULT '',
+      commit_id TEXT DEFAULT '',
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
   `);
+
+  try {
+    await queryD1(`ALTER TABLE logs ADD COLUMN commit_id TEXT DEFAULT ''`);
+  } catch (e) {
+    // Column already exists or table freshly created
+  }
 
   console.log("✅ [Cloudflare D1] Schema initialized successfully!");
 };

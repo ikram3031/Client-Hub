@@ -95,6 +95,16 @@ const sendLog = (apiUrl, projectSlug, payload) => {
   });
 };
 
+const { execSync } = require("child_process");
+
+const getGitCommit = () => {
+  try {
+    return execSync("git rev-parse --short HEAD", { stdio: ["ignore", "pipe", "ignore"] }).toString().trim();
+  } catch (e) {
+    return "";
+  }
+};
+
 /**
  * Main logger runner
  */
@@ -104,9 +114,11 @@ const runLogger = async () => {
 
   if (!flags.summary) {
     console.error("❌ Error: `--summary` flag is required.");
-    console.log(`\nUsage:\n  node scripts/log.js --summary "Summary of change" [--scope backend] [--feat FEAT-1] [--task TASK-1-1] [--files "file1.ts,file2.ts"]\n`);
+    console.log(`\nUsage:\n  node scripts/log.js --summary "Summary of change" [--scope backend] [--feat FEAT-1] [--task TASK-1-1] [--files "file1.ts,file2.ts"] [--commit "abc1234"]\n`);
     process.exit(1);
   }
+
+  const commitId = flags.commit || getGitCommit();
 
   const payload = {
     scope: flags.scope || (config.logs?.scopes?.[0] || "backend"),
@@ -116,6 +128,7 @@ const runLogger = async () => {
     summary: flags.summary,
     promptUsed: flags.prompt || "",
     changedFiles: flags.files ? flags.files.split(",").map((f) => f.trim()) : [],
+    commitId: commitId || "",
   };
 
   const projectSlug = config.project?.slug;
@@ -127,7 +140,7 @@ const runLogger = async () => {
     const result = await sendLog(hubApiUrl, projectSlug, payload);
     if (result.success) {
       console.log("✅ Log stored successfully in Cloudflare D1!");
-      console.log(`   ID: ${result.log?.id} | Scope: ${result.log?.scope} | Action: ${result.log?.action}`);
+      console.log(`   ID: ${result.log?.id} | Scope: ${result.log?.scope} | Commit: ${result.log?.commit_id || commitId || "N/A"}`);
     } else {
       console.error("❌ Hub Error:", result);
     }

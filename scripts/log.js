@@ -27,7 +27,7 @@ const loadConfig = () => {
   }
 
   try {
-    const raw = fs.readFileSync(configPath, "utf-8");
+    const raw = fs.readFileSync(configPath, "utf-8").replace(/^\uFEFF/, "");
     return JSON.parse(raw);
   } catch (err) {
     console.error("❌ Failed to parse `.config/config.json`:", err.message);

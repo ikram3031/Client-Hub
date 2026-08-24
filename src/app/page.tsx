@@ -18,6 +18,7 @@ import { LogViewer } from "@/components/LogViewer";
 import { ProjectOverview } from "@/components/ProjectOverview";
 import { NewDocModal } from "@/components/NewDocModal";
 import { NewProjectModal } from "@/components/NewProjectModal";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { Database, Sparkles, Terminal, BookOpen, Layers, Menu, X } from "lucide-react";
 
 // Main Hub Page layout connecting hierarchical sidebar tree with dynamic content viewports
@@ -131,14 +132,6 @@ const HomePage: React.FC = () => {
 
   return (
     <div className="flex h-screen w-screen bg-black text-zinc-100 overflow-hidden font-sans select-none">
-      {/* Mobile Menu Toggle Button */}
-      <button
-        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-        className="md:hidden fixed top-3 right-3 z-50 p-2 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-300"
-      >
-        {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-      </button>
-
       {/* Left Sidebar Tree */}
       <div
         className={`${
@@ -164,93 +157,125 @@ const HomePage: React.FC = () => {
         />
       </div>
 
-      {/* Main Content Area */}
-      <main className="flex-1 flex flex-col h-full overflow-hidden bg-zinc-950">
-        {isLoading ? (
-          <div className="flex-1 flex flex-col items-center justify-center text-zinc-500 gap-3">
-            <div className="w-8 h-8 rounded-full border-2 border-emerald-500/30 border-t-emerald-500 animate-spin" />
-            <span className="text-xs font-mono">Syncing with Cloudflare D1...</span>
+      {/* Main Container */}
+      <div className="flex-1 flex flex-col h-full overflow-hidden bg-zinc-950">
+        {/* Top Navigation Bar */}
+        <header className="h-13 px-4 md:px-8 border-b border-zinc-800/80 bg-zinc-950/80 backdrop-blur-md flex items-center justify-between shrink-0 z-10">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="md:hidden p-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-300"
+            >
+              {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+            </button>
+            <div className="flex items-center gap-2">
+              <span className="font-extrabold text-sm tracking-tight text-white flex items-center gap-1.5">
+                <span className="text-base">📖</span> docsNlogs
+              </span>
+              <span className="text-zinc-600">/</span>
+              <span className="text-xs font-semibold text-emerald-400 font-mono">
+                {activeProject.name}
+              </span>
+            </div>
           </div>
-        ) : (
-          <>
-            {currentSelection.type === "project-overview" && (
-              <ProjectOverview
-                project={activeProject}
-                docs={docs}
-                features={features}
-                onNavigateFolder={(category) =>
-                  setCurrentSelection({
-                    type: "folder-overview",
-                    projectSlug: activeProjectSlug,
-                    category,
-                  })
-                }
-                onNavigateDoc={(slug) =>
-                  setCurrentSelection({
-                    type: "doc",
-                    projectSlug: activeProjectSlug,
-                    docSlug: slug,
-                  })
-                }
-                onNavigateLogs={() =>
-                  setCurrentSelection({
-                    type: "logs",
-                    projectSlug: activeProjectSlug,
-                  })
-                }
-                onOpenNewDocModal={handleOpenNewDocModal}
-              />
-            )}
 
-            {currentSelection.type === "folder-overview" && (
-              <FolderOverview
-                projectSlug={activeProjectSlug}
-                category={currentSelection.category}
-                docs={docs}
-                onSelectDoc={(slug) =>
-                  setCurrentSelection({
-                    type: "doc",
-                    projectSlug: activeProjectSlug,
-                    docSlug: slug,
-                  })
-                }
-                onOpenNewDocModal={(cat) => handleOpenNewDocModal(cat)}
-              />
-            )}
+          <div className="flex items-center gap-3">
+            <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-zinc-900 border border-zinc-800 text-[11px] text-zinc-400">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span>D1 Edge Live</span>
+            </div>
+            <ThemeToggle />
+          </div>
+        </header>
 
-            {currentSelection.type === "doc" && selectedDoc && (
-              <DocViewer
-                doc={selectedDoc}
-                projectSlug={activeProjectSlug}
-                onDocUpdated={() => loadProjectData(activeProjectSlug)}
-                onDocDeleted={() => {
-                  loadProjectData(activeProjectSlug);
-                  setCurrentSelection({
-                    type: "project-overview",
-                    projectSlug: activeProjectSlug,
-                  });
-                }}
-                onNavigateFolder={(cat) =>
-                  setCurrentSelection({
-                    type: "folder-overview",
-                    projectSlug: activeProjectSlug,
-                    category: cat,
-                  })
-                }
-              />
-            )}
+        {/* Viewport Content */}
+        <main className="flex-1 flex flex-col h-full overflow-hidden">
+          {isLoading ? (
+            <div className="flex-1 flex flex-col items-center justify-center text-zinc-500 gap-3">
+              <div className="w-8 h-8 rounded-full border-2 border-emerald-500/30 border-t-emerald-500 animate-spin" />
+              <span className="text-xs font-mono">Syncing with Cloudflare D1...</span>
+            </div>
+          ) : (
+            <>
+              {currentSelection.type === "project-overview" && (
+                <ProjectOverview
+                  project={activeProject}
+                  docs={docs}
+                  features={features}
+                  onNavigateFolder={(category) =>
+                    setCurrentSelection({
+                      type: "folder-overview",
+                      projectSlug: activeProjectSlug,
+                      category,
+                    })
+                  }
+                  onNavigateDoc={(slug) =>
+                    setCurrentSelection({
+                      type: "doc",
+                      projectSlug: activeProjectSlug,
+                      docSlug: slug,
+                    })
+                  }
+                  onNavigateLogs={() =>
+                    setCurrentSelection({
+                      type: "logs",
+                      projectSlug: activeProjectSlug,
+                    })
+                  }
+                  onOpenNewDocModal={handleOpenNewDocModal}
+                />
+              )}
 
-            {currentSelection.type === "logs" && (
-              <LogViewer
-                projectSlug={activeProjectSlug}
-                logs={logs}
-                featureKey={currentSelection.featureKey}
-                onRefresh={() => loadProjectData(activeProjectSlug)}
-              />
-            )}
-          </>
-        )}
-      </main>
+              {currentSelection.type === "folder-overview" && (
+                <FolderOverview
+                  projectSlug={activeProjectSlug}
+                  category={currentSelection.category}
+                  docs={docs}
+                  onSelectDoc={(slug) =>
+                    setCurrentSelection({
+                      type: "doc",
+                      projectSlug: activeProjectSlug,
+                      docSlug: slug,
+                    })
+                  }
+                  onOpenNewDocModal={(cat) => handleOpenNewDocModal(cat)}
+                />
+              )}
+
+              {currentSelection.type === "doc" && selectedDoc && (
+                <DocViewer
+                  doc={selectedDoc}
+                  projectSlug={activeProjectSlug}
+                  onDocUpdated={() => loadProjectData(activeProjectSlug)}
+                  onDocDeleted={() => {
+                    loadProjectData(activeProjectSlug);
+                    setCurrentSelection({
+                      type: "project-overview",
+                      projectSlug: activeProjectSlug,
+                    });
+                  }}
+                  onNavigateFolder={(cat) =>
+                    setCurrentSelection({
+                      type: "folder-overview",
+                      projectSlug: activeProjectSlug,
+                      category: cat,
+                    })
+                  }
+                />
+              )}
+
+              {currentSelection.type === "logs" && (
+                <LogViewer
+                  projectSlug={activeProjectSlug}
+                  logs={logs}
+                  featureKey={currentSelection.featureKey}
+                  onRefresh={() => loadProjectData(activeProjectSlug)}
+                />
+              )}
+            </>
+          )}
+        </main>
+      </div>
 
       {/* Modals */}
       <NewDocModal

@@ -3,6 +3,7 @@
 import React from "react";
 import { Folder, FileText, Plus, ChevronRight, BookOpen, Clock } from "lucide-react";
 import { DocItem } from "@/lib/api";
+import { Breadcrumb } from "@/components/Breadcrumb";
 
 interface FolderOverviewProps {
   projectSlug: string;
@@ -10,6 +11,7 @@ interface FolderOverviewProps {
   docs: DocItem[];
   onSelectDoc: (slug: string) => void;
   onOpenNewDocModal: (category: string) => void;
+  onNavigateHome?: () => void;
 }
 
 // Category folder overview displaying documents cards, stats, and creation triggers
@@ -19,6 +21,7 @@ export const FolderOverview: React.FC<FolderOverviewProps> = ({
   docs,
   onSelectDoc,
   onOpenNewDocModal,
+  onNavigateHome,
 }) => {
   const categoryDocs = docs.filter(
     (d) => d.category.toLowerCase() === category.toLowerCase()
@@ -26,42 +29,39 @@ export const FolderOverview: React.FC<FolderOverviewProps> = ({
 
   return (
     <div className="flex-1 flex flex-col h-full overflow-y-auto theme-bg-primary theme-text-primary p-6 md:p-10 font-sans">
-      {/* 1. Breadcrumbs */}
+      {/* 1. Prominent Breadcrumbs */}
+      <Breadcrumb
+        items={[
+          { label: "Projects", onClick: onNavigateHome },
+          { label: projectSlug, onClick: onNavigateHome },
+          { label: "DOCs" },
+          { label: category, icon: Folder },
+        ]}
+      />
+
+      {/* 2. Top Actions Header */}
       <div className="flex items-center justify-between pb-6 mb-6 border-b theme-border">
-        <div className="flex items-center gap-2 text-xs theme-text-muted font-mono">
-          <span>Projects</span>
-          <ChevronRight className="w-3.5 h-3.5 opacity-50" />
-          <span className="theme-accent font-semibold">{projectSlug}</span>
-          <ChevronRight className="w-3.5 h-3.5 opacity-50" />
-          <span className="theme-text-primary">DOCs</span>
-          <ChevronRight className="w-3.5 h-3.5 opacity-50" />
-          <span className="text-amber-500 font-semibold">{category}</span>
-        </div>
-
-        <button
-          onClick={() => onOpenNewDocModal(category)}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg transition-all cursor-pointer shadow-sm"
-        >
-          <Plus className="w-3.5 h-3.5" />
-          <span>New {category} Doc</span>
-        </button>
-      </div>
-
-      {/* 2. Category Title Header */}
-      <div className="mb-8">
-        <div className="flex items-center gap-3 mb-2">
-          <div className="p-3 rounded-2xl bg-amber-500/10 text-amber-500 border border-amber-500/20">
+        <div className="flex items-center gap-3">
+          <div className="p-3 rounded-2xl bg-amber-500/10 text-amber-500 border border-amber-500/20 shadow-xs">
             <Folder className="w-6 h-6" />
           </div>
           <div>
             <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight theme-text-primary">
-              {category} Folder
+              {category} Category
             </h1>
             <p className="text-xs theme-text-muted mt-0.5">
               Contains {categoryDocs.length} documentation page{categoryDocs.length !== 1 ? "s" : ""}
             </p>
           </div>
         </div>
+
+        <button
+          onClick={() => onOpenNewDocModal(category)}
+          className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl transition-all cursor-pointer shadow-sm"
+        >
+          <Plus className="w-4 h-4" />
+          <span>New {category} Doc</span>
+        </button>
       </div>
 
       {/* 3. Document Cards Grid */}
@@ -74,7 +74,7 @@ export const FolderOverview: React.FC<FolderOverviewProps> = ({
           </p>
           <button
             onClick={() => onOpenNewDocModal(category)}
-            className="mt-4 flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-medium theme-bg-card theme-bg-hover theme-text-primary rounded-lg border theme-border transition-all cursor-pointer"
+            className="mt-4 flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold theme-bg-card theme-bg-hover theme-text-primary rounded-lg border theme-border transition-all cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Create Document</span>
@@ -106,7 +106,7 @@ export const FolderOverview: React.FC<FolderOverviewProps> = ({
                 </p>
               </div>
 
-              <div className="flex items-center justify-between pt-3 border-t theme-border text-[11px] theme-text-muted">
+              <div className="flex items-center justify-between pt-3 border-t theme-border text-[11px] theme-text-muted font-mono">
                 <div className="flex items-center gap-1">
                   <Clock className="w-3 h-3" />
                   <span>{new Date(doc.updated_at || doc.created_at).toLocaleDateString()}</span>

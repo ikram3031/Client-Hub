@@ -1,72 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --bg-primary: #050508;
-  --bg-secondary: #0c0d12;
-  --bg-card: #12131a;
-  --bg-hover: #1b1c26;
-  --bg-accent: #1e202e;
-  --border-color: #1f2233;
-  --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
-  --text-muted: #64748b;
-  --accent-color: #10b981;
-  --accent-light: rgba(16, 185, 129, 0.15);
-  --accent-border: rgba(16, 185, 129, 0.3);
-  --prose-code-bg: #18181b;
-}
-
-[data-theme="midnight"] {
-  --bg-primary: #050508;
-  --bg-secondary: #0c0d12;
-  --bg-card: #12131a;
-  --bg-hover: #1a1b24;
-  --bg-accent: #1e202e;
-  --border-color: #1f2233;
-  --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
-  --text-muted: #64748b;
-  --accent-color: #10b981;
-  --accent-light: rgba(16, 185, 129, 0.15);
-  --accent-border: rgba(16, 185, 129, 0.3);
-  --prose-code-bg: #18181b;
-}
-
-[data-theme="slate"] {
-  --bg-primary: #0b1120;
-  --bg-secondary: #111827;
-  --bg-card: #1f2937;
-  --bg-hover: #374151;
-  --bg-accent: #374151;
-  --border-color: #374151;
-  --text-primary: #f9fafb;
-  --text-secondary: #d1d5db;
-  --text-muted: #9ca3af;
-  --accent-color: #38bdf8;
-  --accent-light: rgba(56, 189, 248, 0.15);
-  --accent-border: rgba(56, 189, 248, 0.3);
-  --prose-code-bg: #1f2937;
-}
-
-[data-theme="synthwave"] {
-  --bg-primary: #0b0714;
-  --bg-secondary: #130c22;
-  --bg-card: #1e1335;
-  --bg-hover: #2e1e4f;
-  --bg-accent: #3b2566;
-  --border-color: #2f1d52;
-  --text-primary: #faf5ff;
-  --text-secondary: #d8b4fe;
-  --text-muted: #a855f7;
-  --accent-color: #c084fc;
-  --accent-light: rgba(192, 132, 252, 0.15);
-  --accent-border: rgba(192, 132, 252, 0.3);
-  --prose-code-bg: #1e1335;
-}
-
-[data-theme="light"] {
-  --bg-primary: #f8fafc;
-  --bg-secondary: #ffffff;
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8fafc;
   --bg-card: #ffffff;
   --bg-hover: #f1f5f9;
   --bg-accent: #e2e8f0;
@@ -76,14 +12,85 @@
   --text-muted: #64748b;
   --accent-color: #059669;
   --accent-light: rgba(5, 150, 105, 0.1);
-  --accent-border: rgba(5, 150, 105, 0.3);
-  --prose-code-bg: #f1f5f9;
+  --accent-border: rgba(5, 150, 105, 0.25);
+  --code-bg: #0f172a;
+  --code-text: #f8fafc;
 }
 
-body {
+[data-theme="light"] {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8fafc;
+  --bg-card: #ffffff;
+  --bg-hover: #f1f5f9;
+  --bg-accent: #e2e8f0;
+  --border-color: #e2e8f0;
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --text-muted: #64748b;
+  --accent-color: #059669;
+  --accent-light: rgba(5, 150, 105, 0.1);
+  --accent-border: rgba(5, 150, 105, 0.25);
+  --code-bg: #0f172a;
+  --code-text: #f8fafc;
+}
+
+[data-theme="midnight"] {
+  --bg-primary: #090a0f;
+  --bg-secondary: #11131a;
+  --bg-card: #171923;
+  --bg-hover: #222533;
+  --bg-accent: #262938;
+  --border-color: #262938;
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --accent-color: #10b981;
+  --accent-light: rgba(16, 185, 129, 0.15);
+  --accent-border: rgba(16, 185, 129, 0.3);
+  --code-bg: #050508;
+  --code-text: #f8fafc;
+}
+
+[data-theme="slate"] {
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --bg-card: #1e293b;
+  --bg-hover: #334155;
+  --bg-accent: #334155;
+  --border-color: #334155;
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+  --accent-color: #38bdf8;
+  --accent-light: rgba(56, 189, 248, 0.15);
+  --accent-border: rgba(56, 189, 248, 0.3);
+  --code-bg: #0b1120;
+  --code-text: #f8fafc;
+}
+
+[data-theme="synthwave"] {
+  --bg-primary: #0e0a1a;
+  --bg-secondary: #161028;
+  --bg-card: #20173b;
+  --bg-hover: #312359;
+  --bg-accent: #3b2a6b;
+  --border-color: #352661;
+  --text-primary: #faf5ff;
+  --text-secondary: #d8b4fe;
+  --text-muted: #a855f7;
+  --accent-color: #c084fc;
+  --accent-light: rgba(192, 132, 252, 0.15);
+  --accent-border: rgba(192, 132, 252, 0.3);
+  --code-bg: #090512;
+  --code-text: #f8fafc;
+}
+
+html, body {
   background-color: var(--bg-primary);
   color: var(--text-primary);
-  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  min-height: 100%;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  -webkit-font-smoothing: antialiased;
 }
 
 /* Theme utility classes */

@@ -114,6 +114,11 @@ const HomePage: React.FC = () => {
     setCurrentSelection({ type: "project-overview", projectSlug: newSlug });
   };
 
+  // Navigates back to project root
+  const handleNavigateHome = () => {
+    setCurrentSelection({ type: "project-overview", projectSlug: activeProjectSlug });
+  };
+
   const activeProject = projects.find((p) => p.slug === activeProjectSlug) || {
     id: "default",
     name: "docsNlogs",
@@ -160,7 +165,7 @@ const HomePage: React.FC = () => {
       {/* Main Container */}
       <div className="flex-1 flex flex-col h-full overflow-hidden theme-bg-primary">
         {/* Top Navigation Bar */}
-        <header className="h-13 px-4 md:px-8 border-b theme-border theme-bg-secondary flex items-center justify-between shrink-0 z-10">
+        <header className="h-14 px-4 md:px-8 border-b theme-border theme-bg-secondary flex items-center justify-between shrink-0 z-10 shadow-2xs">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -168,19 +173,22 @@ const HomePage: React.FC = () => {
             >
               {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
             </button>
-            <div className="flex items-center gap-2">
-              <span className="font-extrabold text-sm tracking-tight theme-text-primary flex items-center gap-1.5">
+            <div
+              onClick={handleNavigateHome}
+              className="flex items-center gap-2 cursor-pointer group"
+            >
+              <span className="font-black text-sm tracking-tight theme-text-primary flex items-center gap-1.5 group-hover:theme-accent transition-colors">
                 <span className="text-base">📖</span> docsNlogs
               </span>
               <span className="theme-text-muted">/</span>
-              <span className="text-xs font-semibold theme-accent font-mono">
+              <span className="text-xs font-bold theme-accent font-mono">
                 {activeProject.name}
               </span>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full theme-bg-card border theme-border text-[11px] theme-text-muted">
+            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full theme-bg-card border theme-border text-[11px] font-medium theme-text-muted">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
               <span>D1 Edge Live</span>
             </div>
@@ -193,7 +201,7 @@ const HomePage: React.FC = () => {
           {isLoading ? (
             <div className="flex-1 flex flex-col items-center justify-center theme-text-muted gap-3">
               <div className="w-8 h-8 rounded-full border-2 theme-accent-border border-t-emerald-500 animate-spin" />
-              <span className="text-xs font-mono">Syncing with Cloudflare D1...</span>
+              <span className="text-xs font-mono font-medium">Syncing with Cloudflare D1...</span>
             </div>
           ) : (
             <>
@@ -239,6 +247,7 @@ const HomePage: React.FC = () => {
                     })
                   }
                   onOpenNewDocModal={(cat) => handleOpenNewDocModal(cat)}
+                  onNavigateHome={handleNavigateHome}
                 />
               )}
 
@@ -261,6 +270,7 @@ const HomePage: React.FC = () => {
                       category: cat,
                     })
                   }
+                  onNavigateHome={handleNavigateHome}
                 />
               )}
 
@@ -270,6 +280,7 @@ const HomePage: React.FC = () => {
                   logs={logs}
                   featureKey={currentSelection.featureKey}
                   onRefresh={() => loadProjectData(activeProjectSlug)}
+                  onNavigateHome={handleNavigateHome}
                 />
               )}
             </>

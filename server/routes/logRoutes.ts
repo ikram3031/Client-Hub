@@ -1,0 +1,99 @@
+import { Router, Request, Response } from "express";
+import { queryD1 } from "../config/d1";
+import { randomUUID } from "crypto";
+
+export const logRouter = Router({ mergeParams: true });
+
+// 1. GET /api/projects/:projectSlug/logs - List all AI logs with filters
+logRouter.get("/", async (req: Request, res: Response) => {
+  try {
+    const projectSlug = req.params.projectSlug as string;
+    const { scope, featureKey, subTaskKey, limit } = req.query;
+
+    let sql = `SELECT * FROM logs WHERE project_slug = ?`;
+    const params: any[] = [projectSlug];
+
+    if (scope) {
+      sql += ` AND LOWER(scope) = LOWER(?)`;
+      params.push(scope);
+    }
+    if (featureKey) {
+      sql += ` AND feature_key = ?`;
+      params.push(featureKey);
+    }
+    if (subTaskKey) {
+      sql += ` AND sub_task_key = ?`;
+      params.push(subTaskKey);
+    }
+
+    const maxLimit = parseInt(limit as string, 10) || 100;
+    sql += ` ORDER BY created_at DESC LIMIT ${maxLimit}`;
+
+    const logs = await queryD1(sql, params);
+    const formatted = logs.map((l: any) => ({
+      ...l,
+      changedFiles: JSON.parse(l.changed_files || "[]"),
+    }));
+
+    res.json({ success: true, count: formatted.length, logs: formatted });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// 2. POST /api/projects/:projectSlug/logs - AI Log ingestion endpoint
+logRouter.post("/", async (req: Request, res: Response) => {
+  try {
+    const projectSlug = req.params.projectSlug as string;
+    const { scope, featureKey, subTaskKey, action, summary, promptUsed, changedFiles, diffSummary } = req.body;
+
+    if (!summary) {
+      return res.status(400).json({ success: false, error: "Summary is required" });
+    }
+
+    const cleanFeatureKey = featureKey ? featureKey.toUpperCase() : null;
+    const cleanSubTaskKey = subTaskKey ? subTaskKey.toUpperCase() : null;
+
+    // Auto-create Feature if key provided but not exists
+    if (cleanFeatureKey) {
+      const featExists = await queryD1(`SELECT * FROM features WHERE project_slug = ? AND key = ?`, [projectSlug, cleanFeatureKey]);
+      if (featExists.length === 0) {
+        const featId = randomUUID();
+        await queryD1(
+          `INSERT INTO features (id, project_slug, key, scope, title, description, status) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          [featId, projectSlug, cleanFeatureKey, (scope || "backend").toLowerCase(), `Feature ${cleanFeatureKey}`, "Auto-created by AI Log Ingestion", "in_progress"]
+        );
+      }
+    }
+
+    // Auto-create SubTask if key provided but not exists
+    if (cleanSubTaskKey && cleanFeatureKey) {
+      const taskExists = await queryD1(`SELECT * FROM subtasks WHERE project_slug = ? AND key = ?`, [projectSlug, cleanSubTaskKey]);
+      if (taskExists.length === 0) {
+        const taskId = randomUUID();
+        await queryD1(
+          `INSERT INTO subtasks (id, project_slug, key, feature_key, title, status, notes) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          [taskId, projectSlug, cleanSubTaskKey, cleanFeatureKey, `Task ${cleanSubTaskKey}`, "in_progress", "Auto-created by AI Log Ingestion"]
+        );
+      }
+    }
+
+    const logId = randomUUID();
+    const cleanFiles = Array.isArray(changedFiles) ? changedFiles : [];
+
+    await queryD1(
+      `INSERT INTO logs (id, project_slug, scope, feature_key, sub_task_key, action, summary, prompt_used, changed_files, diff_summary) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [logId, projectSlug, (scope || "backend").toLowerCase(), cleanFeatureKey, cleanSubTaskKey, action || "feature", summary, promptUsed || "", JSON.stringify(cleanFiles), diffSummary || ""]
+    );
+
+    const created = await queryD1(`SELECT * FROM logs WHERE id = ?`, [logId]);
+    res.status(201).json({
+      success: true,
+      message: "Log stored in Cloudflare D1",
+      log: { ...created[0], changedFiles: JSON.parse(created[0].changed_files || "[]") },
+    });
+  } catch (error: any) {
+    console.error("[AI Log Ingestion Error]:", error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});

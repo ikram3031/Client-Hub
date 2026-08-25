@@ -1,4 +1,4 @@
-﻿{
+{
   "project": {
     "name": "docsNlogs",
     "slug": "docsNlogs",
@@ -6,9 +6,9 @@
   },
   "hubApiUrl": "http://localhost:5000",
   "docs": {
-    "categories": ["Architecture", "Backend", "Frontend", "Dashboard"]
+    "categories": ["Architecture", "Backend", "Dashboard"]
   },
   "logs": {
-    "scopes": ["architecture", "backend", "frontend", "dashboard"]
+    "scopes": ["architecture", "backend", "dashboard"]
   }
 }

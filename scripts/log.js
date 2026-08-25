@@ -2,13 +2,21 @@
 
 /**
  * 🤖 AI Action Logger CLI & Direct Cloudflare D1 Ingestion Engine
+ * Strictly follows Git Commit & Changelog Standards:
  * 
- * Automatically captures git commit hash, modified files, AI prompts,
- * and pushes the log directly to Cloudflare D1 database.
+ * Format: <LogID>(<type>): <description>
  * 
- * Usage:
- *   node scripts/log.js --summary "Refactored UI to pure lightweight documentation reader" --scope frontend --prompt "Make it a simple doc viewer"
- *   node scripts/log.js --summary "Implemented user authentication" --scope backend --feat FEAT-1
+ * LogID Examples:
+ *   - Dashboard / UI changes : AD01, AD76, etc.
+ *   - Backend / API changes  : AB01, AB84, etc.
+ *   - Architecture changes   : AA01, AA10, etc.
+ * 
+ * Types: feat, fix, refc, docs, perf, chor, styl, test
+ * 
+ * Usage Examples:
+ *   node scripts/log.js "AD76(feat): add localstorage persistence and in-dropdown category search"
+ *   node scripts/log.js "AB85(fix): resolve category regex and comma separated query parsing in product filter"
+ *   node scripts/log.js --scope backend --type fix --summary "resolve query parsing" --prompt "Fix regex issue"
  */
 
 const fs = require("fs");
@@ -16,7 +24,6 @@ const path = require("path");
 const http = require("http");
 const https = require("https");
 const { execSync } = require("child_process");
-const crypto = require("crypto");
 
 // 1. Load environment variables from .env
 const loadEnv = () => {
@@ -53,34 +60,29 @@ const loadConfig = () => {
   };
 };
 
-// 3. Parse CLI command line flags
-const parseFlags = () => {
+// 3. Parse CLI command line flags & positional message
+const parseArgs = () => {
   const args = process.argv.slice(2);
   const flags = {};
+  let positionalMessage = "";
 
   for (let i = 0; i < args.length; i++) {
     if (args[i].startsWith("--")) {
       const key = args[i].replace(/^--/, "");
       const val = args[i + 1] && !args[i + 1].startsWith("--") ? args[++i] : true;
       flags[key] = val;
+    } else if (!positionalMessage) {
+      positionalMessage = args[i];
     }
   }
 
-  return flags;
+  return { flags, positionalMessage };
 };
 
 // 4. Git Helpers
 const getGitCommitHash = () => {
   try {
     return execSync("git rev-parse --short HEAD", { stdio: ["ignore", "pipe", "ignore"] }).toString().trim();
-  } catch (e) {
-    return "";
-  }
-};
-
-const getGitFullCommitHash = () => {
-  try {
-    return execSync("git rev-parse HEAD", { stdio: ["ignore", "pipe", "ignore"] }).toString().trim();
   } catch (e) {
     return "";
   }
@@ -104,7 +106,7 @@ const getGitChangedFiles = () => {
   return [];
 };
 
-// 5. Direct Cloudflare D1 Query Execution via REST API
+// 5. Cloudflare D1 Query Execution via REST API
 const queryD1Direct = async (sql, params = []) => {
   const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
   const apiToken = process.env.CLOUDFLARE_API_TOKEN;
@@ -153,76 +155,106 @@ const queryD1Direct = async (sql, params = []) => {
   });
 };
 
-// 6. HTTP API fallback
-const sendLogViaHttp = (apiUrl, projectSlug, payload) => {
-  return new Promise((resolve, reject) => {
-    const url = new URL(`${apiUrl}/api/projects/${projectSlug}/logs`);
-    const client = url.protocol === "https:" ? https : http;
-    const body = JSON.stringify(payload);
-
-    const req = client.request(
-      url,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Content-Length": Buffer.byteLength(body),
-        },
-      },
-      (res) => {
-        let resBody = "";
-        res.on("data", (chunk) => (resBody += chunk));
-        res.on("end", () => {
-          try {
-            resolve(JSON.parse(resBody));
-          } catch (e) {
-            resolve({ raw: resBody });
-          }
-        });
-      }
+// Calculates next sequential LogID (e.g. AB01, AD01, AA01)
+const getNextSequentialLogId = async (projectSlug, prefix) => {
+  try {
+    const rows = await queryD1Direct(
+      `SELECT id FROM logs WHERE project_slug = ? AND id LIKE ?`,
+      [projectSlug, `${prefix}%`]
     );
 
-    req.on("error", reject);
-    req.write(body);
-    req.end();
-  });
+    let maxNum = 0;
+    for (const r of rows) {
+      const match = new RegExp(`^${prefix}(\\d+)$`, "i").exec(r.id || "");
+      if (match) {
+        const num = parseInt(match[1], 10);
+        if (!isNaN(num) && num > maxNum) {
+          maxNum = num;
+        }
+      }
+    }
+
+    const nextNum = maxNum + 1;
+    return `${prefix}${String(nextNum).padStart(2, "0")}`;
+  } catch (e) {
+    return `${prefix}01`;
+  }
 };
 
-// 7. Main Logger Runner
+// Parses standard format: <LogID>(<type>): <description>
+const parseStandardMessage = (text) => {
+  const regex = /^([A-Za-z]{2}\d+)\((feat|fix|refc|docs|perf|chor|styl|test)\):\s*(.+)$/i;
+  const match = regex.exec(text.trim());
+  if (match) {
+    const logId = match[1].toUpperCase();
+    const type = match[2].toLowerCase();
+    const description = match[3].trim();
+    const prefix = logId.slice(0, 2);
+    const scope = prefix === "AB" ? "backend" : prefix === "AA" ? "architecture" : "frontend";
+
+    return {
+      logId,
+      type,
+      description,
+      scope,
+    };
+  }
+  return null;
+};
+
+// Main Logger Runner
 const runLogger = async () => {
   const config = loadConfig();
-  const flags = parseFlags();
+  const { flags, positionalMessage } = parseArgs();
+
+  const rawMessage = (positionalMessage || flags.summary || flags.m || "").trim();
+  const parsed = parseStandardMessage(rawMessage);
 
   const projectSlug = (flags.project || config.project?.slug || "docsnlogs").toLowerCase();
-  const summary = flags.summary || flags.m || "Executed AI code update";
-  const scope = (flags.scope || "frontend").toLowerCase();
-  const action = flags.action || "feature";
-  const promptUsed = flags.prompt || flags.p || "";
+  let scope = flags.scope || (parsed ? parsed.scope : "frontend");
+  let action = flags.type || flags.action || (parsed ? parsed.type : "feat");
+  let summary = parsed ? parsed.description : rawMessage;
+  let logId = flags.id ? String(flags.id).toUpperCase() : (parsed ? parsed.logId : null);
+
+  if (!summary) {
+    console.error("❌ Error: Commit message or summary is required.");
+    console.log(`\nUsage standard:\n  node scripts/log.js "<LogID>(<type>): <description>"`);
+    console.log(`  e.g.: node scripts/log.js "AD76(feat): add localstorage persistence"`);
+    console.log(`  e.g.: node scripts/log.js "AB85(fix): resolve category regex query parsing"\n`);
+    process.exit(1);
+  }
+
+  // Calculate prefix & next sequential ID if not explicitly specified
+  if (!logId) {
+    const prefix = scope.toLowerCase() === "backend" ? "AB" : scope.toLowerCase() === "architecture" ? "AA" : "AD";
+    logId = await getNextSequentialLogId(projectSlug, prefix);
+  }
+
   const commitId = flags.commit || flags.c || getGitCommitHash();
+  const promptUsed = flags.prompt || flags.p || "";
   const changedFiles = flags.files
     ? flags.files.split(",").map((f) => f.trim()).filter(Boolean)
     : getGitChangedFiles();
 
-  const logId = crypto.randomUUID();
+  const formattedCommitMessage = `${logId}(${action}): ${summary}`;
 
-  console.log(`\n🤖 [AI Action Logger] Ingesting commit into Cloudflare D1 database...`);
+  console.log(`\n📝 [Git Commit & Changelog Standards] Ingesting log to Cloudflare D1...`);
   console.log(`   Project : ${projectSlug}`);
-  console.log(`   Log ID  : #${logId.slice(0, 8)} (${logId})`);
+  console.log(`   LogID   : #${logId}`);
+  console.log(`   Format  : ${formattedCommitMessage}`);
   console.log(`   Commit  : ${commitId || "N/A"}`);
   console.log(`   Scope   : ${scope}`);
-  console.log(`   Summary : ${summary}`);
   if (changedFiles.length > 0) {
     console.log(`   Files   : ${changedFiles.slice(0, 4).join(", ")}${changedFiles.length > 4 ? ` (+${changedFiles.length - 4} more)` : ""}`);
   }
 
-  // Attempt Direct D1 Ingestion
   try {
     await queryD1Direct(
       `INSERT INTO logs (id, project_slug, scope, feature_key, sub_task_key, action, summary, prompt_used, changed_files, diff_summary, commit_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         logId,
         projectSlug,
-        scope,
+        scope.toLowerCase(),
         flags.feat || null,
         flags.task || null,
         action,
@@ -234,32 +266,11 @@ const runLogger = async () => {
       ]
     );
 
-    console.log(`\n✅ [Success] Commit log directly stored in Cloudflare D1!`);
-    console.log(`   Available in Activity Changelog at: /?project=${projectSlug}&view=logs\n`);
-    return;
-  } catch (d1Err) {
-    // Fallback to local express API if direct D1 credentials not available
-    try {
-      const hubApiUrl = config.hubApiUrl || "http://localhost:5000";
-      const result = await sendLogViaHttp(hubApiUrl, projectSlug, {
-        scope,
-        action,
-        summary,
-        promptUsed,
-        changedFiles,
-        commitId,
-        featureKey: flags.feat || null,
-        subTaskKey: flags.task || null,
-      });
-
-      if (result.success) {
-        console.log(`\n✅ [Success] Log stored in Cloudflare D1 via Hub API!`);
-      } else {
-        console.error(`\n❌ Error storing log:`, result.error || d1Err.message);
-      }
-    } catch (httpErr) {
-      console.error(`\n❌ Ingestion Error: ${d1Err.message}`);
-    }
+    console.log(`\n✅ [Success] Log #${logId} stored directly in Cloudflare D1!`);
+    console.log(`   Commit Message: "${formattedCommitMessage}"`);
+    console.log(`   Live at: /?project=${projectSlug}&view=logs\n`);
+  } catch (err) {
+    console.error(`\n❌ Error storing log #${logId}:`, err.message);
   }
 };
 

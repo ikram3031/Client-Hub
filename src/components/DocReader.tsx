@@ -19,8 +19,10 @@ import {
   BookOpen,
   Info,
   Layers,
+  Lock,
 } from "lucide-react";
 import { DocItem, updateDoc, deleteDoc } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
 import { CodeBlock } from "@/components/CodeBlock";
 import { TableOfContents } from "@/components/TableOfContents";
 import { Button } from "@/components/ui/button";
@@ -78,6 +80,7 @@ export const DocReader: React.FC<DocReaderProps> = ({
   onNavigateDoc,
   onNavigateHome,
 }) => {
+  const { isUnlocked, requireAuth } = useAuth();
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [editedTitle, setEditedTitle] = useState<string>(doc.title);
   const [editedCategory, setEditedCategory] = useState<string>(doc.category);
@@ -285,7 +288,7 @@ export const DocReader: React.FC<DocReaderProps> = ({
                     size="sm"
                     onClick={() => setIsEditing(false)}
                   >
-                    <X className="w-3.5 h-3.5" />
+                    <X className="w-3.5 h-3.5 mr-1" />
                     <span>Cancel</span>
                   </Button>
                   <Button
@@ -294,7 +297,7 @@ export const DocReader: React.FC<DocReaderProps> = ({
                     onClick={handleSaveDoc}
                     disabled={isSaving}
                   >
-                    <Save className="w-3.5 h-3.5" />
+                    <Save className="w-3.5 h-3.5 mr-1" />
                     <span>{isSaving ? "Saving..." : "Save Doc"}</span>
                   </Button>
                 </>
@@ -315,17 +318,18 @@ export const DocReader: React.FC<DocReaderProps> = ({
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setIsEditing(true)}
+                    onClick={() => requireAuth(() => setIsEditing(true))}
+                    title={isUnlocked ? "Edit Document" : "Authenticate to Edit"}
                   >
-                    <Edit3 className="w-3.5 h-3.5 mr-1" />
+                    <Edit3 className="w-3.5 h-3.5 mr-1 text-primary" />
                     <span>Edit</span>
                   </Button>
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={handleDeleteDoc}
+                    onClick={() => requireAuth(handleDeleteDoc)}
                     className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-                    title="Delete Document"
+                    title={isUnlocked ? "Delete Document" : "Authenticate to Delete"}
                   >
                     <Trash2 className="w-4 h-4" />
                   </Button>
@@ -570,7 +574,7 @@ export const DocReader: React.FC<DocReaderProps> = ({
       {!isEditing && (
         <TableOfContents
           content={doc.content}
-          onEditClick={() => setIsEditing(true)}
+          onEditClick={() => requireAuth(() => setIsEditing(true))}
         />
       )}
     </div>

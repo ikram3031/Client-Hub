@@ -3,6 +3,7 @@
 import React from "react";
 import { Folder, FileText, Plus, ChevronRight, BookOpen, Clock } from "lucide-react";
 import { DocItem } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -27,6 +28,7 @@ export const FolderOverview: React.FC<FolderOverviewProps> = ({
   onOpenNewDocModal,
   onNavigateHome,
 }) => {
+  const { requireAuth } = useAuth();
   const categoryDocs = docs.filter(
     (d) => d.category.toLowerCase() === category.toLowerCase()
   );
@@ -66,7 +68,7 @@ export const FolderOverview: React.FC<FolderOverviewProps> = ({
           </div>
 
           <Button
-            onClick={() => onOpenNewDocModal(category)}
+            onClick={() => requireAuth(() => onOpenNewDocModal(category))}
           >
             <Plus className="w-4 h-4 mr-1.5" />
             <span>New {category} Doc</span>
@@ -83,7 +85,7 @@ export const FolderOverview: React.FC<FolderOverviewProps> = ({
             </p>
             <Button
               variant="outline"
-              onClick={() => onOpenNewDocModal(category)}
+              onClick={() => requireAuth(() => onOpenNewDocModal(category))}
               className="mt-4"
             >
               <Plus className="w-3.5 h-3.5 mr-1" />

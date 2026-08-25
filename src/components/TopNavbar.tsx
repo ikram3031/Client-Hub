@@ -9,9 +9,13 @@ import {
   History,
   Sparkles,
   Plus,
+  Lock,
+  Unlock,
+  LogOut,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Project } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
@@ -26,7 +30,7 @@ interface TopNavbarProps {
   onOpenNewDocModal: () => void;
 }
 
-// Global top navigation bar with project switcher context, quick navigation links, and theme toggle
+// Global top navigation bar with project switcher context, quick navigation links, developer auth gate, and theme toggle
 export const TopNavbar: React.FC<TopNavbarProps> = ({
   activeProject,
   mobileMenuOpen,
@@ -37,6 +41,8 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
   onOpenSearch,
   onOpenNewDocModal,
 }) => {
+  const { isUnlocked, openAuthModal, lock, requireAuth } = useAuth();
+
   return (
     <header className="h-14 px-4 md:px-6 border-b border-border bg-card flex items-center justify-between shrink-0 z-20 select-none font-sans shadow-2xs">
       {/* Left: Mobile Toggle & Project Branding */}
@@ -94,7 +100,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
         </button>
       </nav>
 
-      {/* Right: Search, Status, New Doc, Theme */}
+      {/* Right: Search, Auth Gate, Status, New Doc, Theme */}
       <div className="flex items-center gap-2">
         {/* Quick Search Button */}
         <button
@@ -109,16 +115,48 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
           </kbd>
         </button>
 
+        {/* Developer Auth Status Gate */}
+        {isUnlocked ? (
+          <div className="flex items-center space-x-1">
+            <Badge variant="emerald" className="hidden sm:inline-flex items-center gap-1 font-mono text-[10px]">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span>Developer Unlocked</span>
+            </Badge>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={lock}
+              className="h-8 px-2.5 text-xs text-muted-foreground hover:text-destructive hover:border-destructive/30"
+              title="Lock Developer Dashboard"
+            >
+              <LogOut className="w-3.5 h-3.5 mr-1" />
+              <span className="hidden md:inline">Lock</span>
+            </Button>
+          </div>
+        ) : (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => openAuthModal()}
+            className="h-8 px-2.5 text-xs border-dashed text-muted-foreground hover:text-foreground"
+            title="Authenticate to unlock developer controls"
+          >
+            <Lock className="w-3.5 h-3.5 mr-1 text-amber-500" />
+            <span className="hidden sm:inline">Guest (Unlock)</span>
+            <span className="sm:hidden">Unlock</span>
+          </Button>
+        )}
+
         {/* Database Health Badge */}
-        <div className="hidden xl:flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-border bg-muted/30 text-[11px] font-mono text-muted-foreground">
+        <div className="hidden 2xl:flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-border bg-muted/30 text-[11px] font-mono text-muted-foreground">
           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span>D1 Edge Live</span>
+          <span>D1 Live</span>
         </div>
 
         {/* New Doc Action */}
         <Button
           size="sm"
-          onClick={onOpenNewDocModal}
+          onClick={() => requireAuth(onOpenNewDocModal)}
           className="hidden sm:inline-flex h-8 px-3"
         >
           <Plus className="w-3.5 h-3.5 mr-1" />

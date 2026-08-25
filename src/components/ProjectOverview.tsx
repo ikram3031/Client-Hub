@@ -13,6 +13,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { Project, DocItem, Feature } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
 import { CodeBlock } from "@/components/CodeBlock";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -38,6 +39,7 @@ export const ProjectOverview: React.FC<ProjectOverviewProps> = ({
   onNavigateLogs,
   onOpenNewDocModal,
 }) => {
+  const { requireAuth } = useAuth();
   const categories = project.docs_categories || ["Architecture", "Backend", "Frontend", "Dashboard"];
 
   // Locates the first featured or overview document
@@ -88,7 +90,7 @@ export const ProjectOverview: React.FC<ProjectOverviewProps> = ({
               )}
               <Button
                 variant="outline"
-                onClick={() => onOpenNewDocModal()}
+                onClick={() => requireAuth(() => onOpenNewDocModal())}
               >
                 <Plus className="w-4 h-4 mr-1.5" />
                 <span>New Doc</span>

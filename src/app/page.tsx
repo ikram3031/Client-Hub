@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, Suspense } from "react";
 import {
   fetchProjects,
   fetchDocs,
@@ -21,9 +21,10 @@ import { NewDocModal } from "@/components/NewDocModal";
 import { NewProjectModal } from "@/components/NewProjectModal";
 import { SearchModal } from "@/components/SearchModal";
 import { TopNavbar } from "@/components/TopNavbar";
+import { AuthModal } from "@/components/AuthModal";
 
-// Main documentation hub connecting hierarchical sidebar navigation with the reader engine and changelog
-const HomePage: React.FC = () => {
+// Documentation hub connecting public read-only reader with developer auth gating and deep-linking
+const DocsApp: React.FC = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [activeProjectSlug, setActiveProjectSlug] = useState<string>("docsnlogs");
   const [docs, setDocs] = useState<DocItem[]>([]);
@@ -44,14 +45,72 @@ const HomePage: React.FC = () => {
   const [docModalCategory, setDocModalCategory] = useState<string | undefined>();
   const [isProjectModalOpen, setIsProjectModalOpen] = useState<boolean>(false);
 
-  // Loads all registered projects on mount
-  const loadProjects = async () => {
+  // Synchronizes view selection with URL query parameters for public shareable URLs
+  const updateUrlParams = useCallback((selection: ViewSelection) => {
+    if (typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+
+    url.searchParams.set("project", selection.projectSlug);
+
+    if (selection.type === "doc") {
+      url.searchParams.set("doc", selection.docSlug);
+      url.searchParams.delete("view");
+      url.searchParams.delete("category");
+    } else if (selection.type === "folder-overview") {
+      url.searchParams.set("category", selection.category);
+      url.searchParams.delete("doc");
+      url.searchParams.delete("view");
+    } else if (selection.type === "logs") {
+      url.searchParams.set("view", "logs");
+      if (selection.featureKey) {
+        url.searchParams.set("feat", selection.featureKey);
+      } else {
+        url.searchParams.delete("feat");
+      }
+      url.searchParams.delete("doc");
+      url.searchParams.delete("category");
+    } else if (selection.type === "features") {
+      url.searchParams.set("view", "features");
+      url.searchParams.delete("doc");
+      url.searchParams.delete("category");
+    } else {
+      url.searchParams.delete("doc");
+      url.searchParams.delete("category");
+      url.searchParams.delete("view");
+    }
+
+    window.history.replaceState({}, "", url.toString());
+  }, []);
+
+  // Loads all registered projects and resolves initial view from URL query params
+  const loadProjectsAndResolveRoute = async () => {
     try {
       const projs = await fetchProjects();
       setProjects(projs);
+
       if (projs.length > 0) {
-        const found = projs.find((p) => p.slug === activeProjectSlug) || projs[0];
-        setActiveProjectSlug(found.slug);
+        const params = new URLSearchParams(window.location.search);
+        const urlProject = params.get("project");
+        const urlDoc = params.get("doc");
+        const urlCat = params.get("category");
+        const urlView = params.get("view");
+        const urlFeat = params.get("feat");
+
+        const matchedProject = projs.find((p) => p.slug === urlProject) || projs[0];
+        const projSlug = matchedProject.slug;
+        setActiveProjectSlug(projSlug);
+
+        if (urlDoc) {
+          setCurrentSelection({ type: "doc", projectSlug: projSlug, docSlug: urlDoc });
+        } else if (urlCat) {
+          setCurrentSelection({ type: "folder-overview", projectSlug: projSlug, category: urlCat });
+        } else if (urlView === "logs") {
+          setCurrentSelection({ type: "logs", projectSlug: projSlug, featureKey: urlFeat || undefined });
+        } else if (urlView === "features") {
+          setCurrentSelection({ type: "features", projectSlug: projSlug });
+        } else {
+          setCurrentSelection({ type: "project-overview", projectSlug: projSlug });
+        }
       }
     } catch (err) {
       console.error("Failed to load projects:", err);
@@ -78,7 +137,7 @@ const HomePage: React.FC = () => {
   };
 
   useEffect(() => {
-    loadProjects();
+    loadProjectsAndResolveRoute();
   }, []);
 
   useEffect(() => {
@@ -102,7 +161,15 @@ const HomePage: React.FC = () => {
   // Handles changing the active project
   const handleSelectProject = (slug: string) => {
     setActiveProjectSlug(slug);
-    setCurrentSelection({ type: "project-overview", projectSlug: slug });
+    const newSel: ViewSelection = { type: "project-overview", projectSlug: slug };
+    setCurrentSelection(newSel);
+    updateUrlParams(newSel);
+  };
+
+  // Handles selecting a view and synchronizing URL
+  const handleSelectView = (selection: ViewSelection) => {
+    setCurrentSelection(selection);
+    updateUrlParams(selection);
   };
 
   // Opens new document modal with optional pre-selected category
@@ -114,33 +181,35 @@ const HomePage: React.FC = () => {
   // Callback when a document is created
   const handleDocCreated = async (newDocSlug: string) => {
     await loadProjectData(activeProjectSlug);
-    setCurrentSelection({
+    const newSel: ViewSelection = {
       type: "doc",
       projectSlug: activeProjectSlug,
       docSlug: newDocSlug,
-    });
+    };
+    handleSelectView(newSel);
   };
 
   // Callback when a project is created
   const handleProjectCreated = async (newSlug: string) => {
-    await loadProjects();
+    await loadProjectsAndResolveRoute();
     setActiveProjectSlug(newSlug);
-    setCurrentSelection({ type: "project-overview", projectSlug: newSlug });
+    const newSel: ViewSelection = { type: "project-overview", projectSlug: newSlug };
+    handleSelectView(newSel);
   };
 
   // Navigates back to project root
   const handleNavigateHome = () => {
-    setCurrentSelection({ type: "project-overview", projectSlug: activeProjectSlug });
+    handleSelectView({ type: "project-overview", projectSlug: activeProjectSlug });
   };
 
   // Navigates to live activity logs view
   const handleNavigateLogs = () => {
-    setCurrentSelection({ type: "logs", projectSlug: activeProjectSlug });
+    handleSelectView({ type: "logs", projectSlug: activeProjectSlug });
   };
 
   // Navigates to features and roadmap view
   const handleNavigateFeatures = () => {
-    setCurrentSelection({ type: "features", projectSlug: activeProjectSlug });
+    handleSelectView({ type: "features", projectSlug: activeProjectSlug });
   };
 
   const activeProject = projects.find((p) => p.slug === activeProjectSlug) || {
@@ -202,7 +271,7 @@ const HomePage: React.FC = () => {
             features={features}
             currentSelection={currentSelection}
             onSelect={(sel) => {
-              setCurrentSelection(sel);
+              handleSelectView(sel);
               setMobileMenuOpen(false);
             }}
             onOpenNewDocModal={(cat) => {
@@ -237,14 +306,14 @@ const HomePage: React.FC = () => {
                   docs={docs}
                   features={features}
                   onNavigateFolder={(category) =>
-                    setCurrentSelection({
+                    handleSelectView({
                       type: "folder-overview",
                       projectSlug: activeProjectSlug,
                       category,
                     })
                   }
                   onNavigateDoc={(slug) =>
-                    setCurrentSelection({
+                    handleSelectView({
                       type: "doc",
                       projectSlug: activeProjectSlug,
                       docSlug: slug,
@@ -263,7 +332,7 @@ const HomePage: React.FC = () => {
                   category={currentSelection.category}
                   docs={docs}
                   onSelectDoc={(slug) =>
-                    setCurrentSelection({
+                    handleSelectView({
                       type: "doc",
                       projectSlug: activeProjectSlug,
                       docSlug: slug,
@@ -284,20 +353,20 @@ const HomePage: React.FC = () => {
                   onDocUpdated={() => loadProjectData(activeProjectSlug)}
                   onDocDeleted={() => {
                     loadProjectData(activeProjectSlug);
-                    setCurrentSelection({
+                    handleSelectView({
                       type: "project-overview",
                       projectSlug: activeProjectSlug,
                     });
                   }}
                   onNavigateFolder={(cat) =>
-                    setCurrentSelection({
+                    handleSelectView({
                       type: "folder-overview",
                       projectSlug: activeProjectSlug,
                       category: cat,
                     })
                   }
                   onNavigateDoc={(slug) =>
-                    setCurrentSelection({
+                    handleSelectView({
                       type: "doc",
                       projectSlug: activeProjectSlug,
                       docSlug: slug,
@@ -326,7 +395,7 @@ const HomePage: React.FC = () => {
                   projectName={activeProject.name}
                   features={features}
                   onSelectFeatureLogs={(featKey) =>
-                    setCurrentSelection({
+                    handleSelectView({
                       type: "logs",
                       projectSlug: activeProjectSlug,
                       featureKey: featKey,
@@ -340,28 +409,30 @@ const HomePage: React.FC = () => {
         </main>
       </div>
 
-      {/* 3. Global Modals */}
+      {/* 3. Global Modals & Auth Challenge */}
+      <AuthModal />
+
       <SearchModal
         isOpen={isSearchOpen}
         onClose={() => setIsSearchOpen(false)}
         docs={docs}
         logs={logs}
         onSelectDoc={(slug) => {
-          setCurrentSelection({
+          handleSelectView({
             type: "doc",
             projectSlug: activeProjectSlug,
             docSlug: slug,
           });
         }}
         onSelectCategory={(cat) => {
-          setCurrentSelection({
+          handleSelectView({
             type: "folder-overview",
             projectSlug: activeProjectSlug,
             category: cat,
           });
         }}
         onSelectLogs={() => {
-          setCurrentSelection({
+          handleSelectView({
             type: "logs",
             projectSlug: activeProjectSlug,
           });
@@ -386,4 +457,10 @@ const HomePage: React.FC = () => {
   );
 };
 
-export default HomePage;
+export default function Page() {
+  return (
+    <Suspense fallback={<div className="h-screen w-screen flex items-center justify-center bg-background text-foreground font-mono text-xs">Loading documentation engine...</div>}>
+      <DocsApp />
+    </Suspense>
+  );
+}

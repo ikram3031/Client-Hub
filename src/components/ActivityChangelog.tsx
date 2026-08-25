@@ -12,8 +12,10 @@ import {
   RefreshCw,
   Search,
   Clock,
+  Lock,
 } from "lucide-react";
 import { ActionLog, postLog } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -69,6 +71,7 @@ export const ActivityChangelog: React.FC<ActivityChangelogProps> = ({
   onRefresh,
   onNavigateHome,
 }) => {
+  const { isUnlocked, requireAuth } = useAuth();
   const [activeScope, setActiveScope] = useState<string>(selectedScope);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
@@ -184,7 +187,8 @@ export const ActivityChangelog: React.FC<ActivityChangelogProps> = ({
             </Button>
             <Button
               variant="default"
-              onClick={() => setShowLogModal(true)}
+              onClick={() => requireAuth(() => setShowLogModal(true))}
+              title={isUnlocked ? "Record New Action Log" : "Authenticate to Record Action Log"}
             >
               <Plus className="h-4 w-4 mr-1.5" />
               <span>Record Log</span>
@@ -314,7 +318,7 @@ export const ActivityChangelog: React.FC<ActivityChangelogProps> = ({
                               >
                                 <FileCode className="h-3 w-3 opacity-70" />
                                 <span>{file}</span>
-                                {isCopied && <Check className="h-2.5 w-2.5 text-emerald-500" />}
+                                {isCopied && <Check className="h-2.5 w-2.5 text-emerald-500 ml-0.5" />}
                               </span>
                             );
                           })}

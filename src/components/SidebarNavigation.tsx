@@ -14,9 +14,11 @@ import {
   Search,
   Compass,
   X,
-  Database,
+  Lock,
+  Unlock,
 } from "lucide-react";
 import { Project, DocItem, Feature } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
@@ -55,6 +57,7 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
   onOpenSearch,
   onCloseMobileDrawer,
 }) => {
+  const { isUnlocked, requireAuth, openAuthModal } = useAuth();
   const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({
     Architecture: true,
     Backend: true,
@@ -102,9 +105,9 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
             <Button
               variant="outline"
               size="sm"
-              onClick={onOpenNewProjectModal}
+              onClick={() => requireAuth(onOpenNewProjectModal)}
               className="h-7 px-2 text-[11px]"
-              title="Onboard New Project"
+              title="Onboard New Project (Requires Passkey)"
             >
               <Plus className="w-3 h-3 mr-1" />
               <span>New</span>
@@ -184,9 +187,9 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
               Documentation
             </p>
             <button
-              onClick={() => onOpenNewDocModal()}
-              className="p-0.5 rounded text-muted-foreground hover:text-foreground"
-              title="Add New Document"
+              onClick={() => requireAuth(() => onOpenNewDocModal())}
+              className="p-0.5 rounded text-muted-foreground hover:text-foreground cursor-pointer"
+              title="Add New Document (Requires Passkey)"
               type="button"
             >
               <Plus className="w-3 h-3" />

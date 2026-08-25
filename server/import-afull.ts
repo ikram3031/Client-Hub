@@ -38,9 +38,10 @@ const extractTitle = (content: string, fallback: string): string => {
 
 const determineCategory = (relPath: string): string => {
   const normalized = relPath.toLowerCase().replace(/\\/g, "/");
+  if (normalized.includes("backend/docs/api") || normalized.includes("api_endpoints")) return "Backend API";
+  if (normalized.includes("backend/docs") || normalized.includes("backend")) return "Backend";
+  if (normalized.includes("dashboard/docs") || normalized.includes("dashboard")) return "Dashboard";
   if (normalized.includes("arch")) return "Architecture";
-  if (normalized.includes("backend")) return "Backend";
-  if (normalized.includes("dashboard")) return "Dashboard";
   if (normalized.includes("deployment") || normalized.includes("vps")) return "Deployment";
   if (normalized.includes("decantre")) return "Decantre";
   if (normalized.includes("engulfic")) return "Engulfic";
@@ -51,23 +52,23 @@ const determineCategory = (relPath: string): string => {
   return "Architecture";
 };
 
-const parseArchitectureLogs = (filePath: string): ParsedLog[] => {
+const parseMultiLogFile = (filePath: string, defaultScope: string): ParsedLog[] => {
   if (!fs.existsSync(filePath)) return [];
   const content = fs.readFileSync(filePath, "utf-8");
   const lines = content.split("\n");
   const logs: ParsedLog[] = [];
 
   let currentLog: Partial<ParsedLog> | null = null;
-  let currentSection = "";
+  let inAffectedFiles = false;
 
   const finalizeLog = () => {
     if (currentLog && currentLog.id && currentLog.summary) {
       logs.push({
         id: currentLog.id,
-        scope: currentLog.scope || "architecture",
+        scope: currentLog.scope || defaultScope,
         action: currentLog.action || "feat",
         summary: currentLog.summary,
-        changedFiles: currentLog.changedFiles || [],
+        changedFiles: Array.from(new Set(currentLog.changedFiles || [])),
         promptUsed: (currentLog.promptUsed || "").trim(),
         commitId: currentLog.commitId || "",
         createdAt: currentLog.createdAt || "2026-08-25 12:00:00",
@@ -77,37 +78,64 @@ const parseArchitectureLogs = (filePath: string): ParsedLog[] => {
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
-    const headerMatch = line.match(/^#\s+\[([A-Za-z0-9_-]+)\]\s*(.+)$/i);
+    
+    // Matches: # [ND92] Summary, ### [ND92] Summary, # [AB-89] Summary, ## AB89: Summary, # [A-70] Summary
+    const headerMatch = line.match(/^#{1,4}\s+\[?([A-Za-z0-9_-]+)\]?[:\s-]\s*(.+)$/i);
 
-    if (headerMatch) {
-      finalizeLog();
+    if (headerMatch && !line.toLowerCase().includes("change logs") && !line.toLowerCase().includes("table of contents")) {
       const rawId = headerMatch[1].toUpperCase();
-      const summary = headerMatch[2].trim();
-      currentLog = {
-        id: rawId,
-        scope: rawId.startsWith("AB") ? "backend" : rawId.startsWith("AD") ? "dashboard" : "architecture",
-        action: "feat",
-        summary: summary,
-        changedFiles: [],
-        promptUsed: "",
-        commitId: "",
-        createdAt: "2026-08-25",
-      };
-      currentSection = "";
-      continue;
+      // Ensure it starts with letters followed by digits
+      if (rawId.match(/^(?:ND|AD|AB|AA|A|DEC|ENG|TOY|DEP)[-_]?\d+/i)) {
+        finalizeLog();
+        const summary = headerMatch[2].trim();
+        let scope = defaultScope;
+        if (rawId.startsWith("ND") || rawId.startsWith("AD")) scope = "dashboard";
+        else if (rawId.startsWith("AB")) scope = "backend";
+        else if (rawId.startsWith("DEC")) scope = "decantre";
+        else if (rawId.startsWith("ENG")) scope = "engulfic";
+        else if (rawId.startsWith("TOY")) scope = "toyoland";
+        else if (rawId.startsWith("DEP")) scope = "deployment";
+        else if (rawId.startsWith("AA") || rawId.startsWith("A")) scope = "architecture";
+
+        currentLog = {
+          id: rawId,
+          scope: scope,
+          action: "feat",
+          summary: summary,
+          changedFiles: [],
+          promptUsed: "",
+          commitId: "",
+          createdAt: "2026-08-25",
+        };
+        inAffectedFiles = false;
+        continue;
+      }
     }
 
     if (!currentLog) continue;
 
-    if (line.match(/^##\s+Change Summary/i) || line.match(/^##\s+Requirements/i)) {
-      currentSection = "summary";
+    if (line.includes("Affected Files") || line.includes("Files changed")) {
+      inAffectedFiles = true;
       continue;
+    }
+
+    if (inAffectedFiles) {
+      if (line.startsWith("- `") || line.startsWith("* `")) {
+        const fileMatch = line.match(/`([^`]+)`/);
+        if (fileMatch) {
+          currentLog.changedFiles = currentLog.changedFiles || [];
+          currentLog.changedFiles.push(fileMatch[1].trim());
+        }
+      } else if (line.startsWith("#") || line.startsWith("---") || line.startsWith("- **")) {
+        inAffectedFiles = false;
+      }
     }
 
     if (line.includes("- **Module**:") || line.includes("### Files changed")) {
       const match = line.match(/`([^`]+)`/g);
       if (match) {
-        currentLog.changedFiles = match.map((m) => m.replace(/`/g, "").trim());
+        currentLog.changedFiles = currentLog.changedFiles || [];
+        match.forEach((m) => currentLog?.changedFiles?.push(m.replace(/`/g, "").trim()));
       }
     }
 
@@ -120,7 +148,7 @@ const parseArchitectureLogs = (filePath: string): ParsedLog[] => {
 
 async function run() {
   console.log("=================================================");
-  console.log(`🚀 Ingesting WL-Ecom (AFull) Documentation & Logs into Cloudflare D1`);
+  console.log(`🚀 Ingesting WL-Ecom Documentation & Logs into Cloudflare D1`);
   console.log("=================================================\n");
 
   await initD1Schema();
@@ -128,6 +156,7 @@ async function run() {
   const docsCategories = [
     "Architecture",
     "Backend",
+    "Backend API",
     "Dashboard",
     "Deployment",
     "Frontend Guide",
@@ -149,7 +178,7 @@ async function run() {
         randomUUID(),
         PROJECT_NAME,
         PROJECT_SLUG,
-        "White-Label Multi-Tenant E-Commerce & Inventory Management Platform (Decantre, Engulfic, Toyoland)",
+        "White-Label Multi-Tenant E-Commerce Platform (Decantre, Engulfic, Toyoland)",
         JSON.stringify(docsCategories),
         JSON.stringify(logScopes),
       ]
@@ -201,17 +230,23 @@ async function run() {
     }
   }
 
-  // 3. Scan & Ingest All Markdown Documentation Files
-  const docsDir = path.join(AFULL_DIR, "Docs");
+  // 3. Scan & Ingest All Markdown Documentation Files across Docs/, backend/docs/api/, etc.
   let docsIngestedCount = 0;
+  const docSearchDirs = [
+    path.join(AFULL_DIR, "Docs"),
+    path.join(AFULL_DIR, "backend", "docs", "api"),
+    path.join(AFULL_DIR, "backend"),
+  ];
 
-  function scanDocFiles(dir: string, baseDir: string): string[] {
+  function scanDocFiles(dir: string): string[] {
     let files: string[] = [];
+    if (!fs.existsSync(dir)) return files;
     const entries = fs.readdirSync(dir, { withFileTypes: true });
     for (const entry of entries) {
+      if (entry.name === "node_modules" || entry.name === ".git") continue;
       const fullPath = path.join(dir, entry.name);
       if (entry.isDirectory()) {
-        files = files.concat(scanDocFiles(fullPath, baseDir));
+        files = files.concat(scanDocFiles(fullPath));
       } else if (entry.isFile() && entry.name.endsWith(".md")) {
         files.push(fullPath);
       }
@@ -219,18 +254,34 @@ async function run() {
     return files;
   }
 
-  const allDocFiles = scanDocFiles(docsDir, docsDir);
-  console.log(`\n📚 Discovered ${allDocFiles.length} documentation files in ${docsDir}:`);
+  const allFoundDocs = new Set<string>();
+  for (const d of docSearchDirs) {
+    for (const f of scanDocFiles(d)) {
+      allFoundDocs.add(f);
+    }
+  }
 
-  for (const docPath of allDocFiles) {
-    const relPath = path.relative(docsDir, docPath);
-    // Skip changelog files from general docs (they are ingested as logs)
-    if (relPath.includes("ARCH\\A01") || relPath.includes("ARCH/A01") || relPath.includes("backend\\AB01") || relPath.includes("backend/AB01")) {
+  console.log(`\n📚 Processing ${allFoundDocs.size} discovered markdown files:`);
+
+  for (const docPath of allFoundDocs) {
+    const relPath = path.relative(AFULL_DIR, docPath);
+    const fileName = path.basename(docPath);
+
+    // Skip changelog/log archive files from static docs
+    if (
+      fileName.startsWith("ND01") ||
+      fileName.startsWith("AB01") ||
+      fileName.startsWith("AB41") ||
+      fileName.startsWith("AB101") ||
+      fileName.startsWith("A01") ||
+      fileName === "AI_INSTRUCTIONS.md" ||
+      fileName === "GEMINI.md"
+    ) {
       continue;
     }
 
     const content = fs.readFileSync(docPath, "utf-8");
-    const title = extractTitle(content, path.basename(docPath));
+    const title = extractTitle(content, fileName);
     const category = determineCategory(relPath);
     const docSlug = slugify(path.basename(docPath, ".md"));
 
@@ -259,16 +310,27 @@ async function run() {
     docsIngestedCount++;
   }
 
-  // 4. Ingest Historical Logs from A01-100.md & AB01-200.md
+  // 4. Ingest Historical Logs from All Log Files
   console.log(`\n🔍 Parsing Historical Action Logs...`);
-  const archLogFile = path.join(docsDir, "ARCH", "A01-100.md");
-  const backendLogFile = path.join(docsDir, "backend", "AB01-200.md");
+  const logFilesToParse = [
+    { file: path.join(AFULL_DIR, "Docs", "ARCH", "A01-100.md"), defaultScope: "architecture" },
+    { file: path.join(AFULL_DIR, "dashboard", "docs", "ND01-200.md"), defaultScope: "dashboard" },
+    { file: path.join(AFULL_DIR, "backend", "docs", "AB", "AB01-40.md"), defaultScope: "backend" },
+    { file: path.join(AFULL_DIR, "backend", "docs", "AB", "AB41-100.md"), defaultScope: "backend" },
+    { file: path.join(AFULL_DIR, "backend", "docs", "AB", "AB101-200.md"), defaultScope: "backend" },
+    { file: path.join(AFULL_DIR, "Docs", "backend", "AB01-200.md"), defaultScope: "backend" },
+  ];
 
-  const archLogs = parseArchitectureLogs(archLogFile);
-  const backendLogs = parseArchitectureLogs(backendLogFile);
-  const allLogs = [...archLogs, ...backendLogs];
+  const allLogs: ParsedLog[] = [];
+  for (const item of logFilesToParse) {
+    if (fs.existsSync(item.file)) {
+      const parsed = parseMultiLogFile(item.file, item.defaultScope);
+      console.log(`  🔍 Parsed ${parsed.length} logs from ${path.relative(AFULL_DIR, item.file)}`);
+      allLogs.push(...parsed);
+    }
+  }
 
-  console.log(`  Found ${archLogs.length} Architecture logs & ${backendLogs.length} Backend logs.`);
+  console.log(`\n📦 Total Logs to Ingest: ${allLogs.length}`);
 
   let logsIngestedCount = 0;
   for (let idx = 0; idx < allLogs.length; idx++) {
@@ -280,7 +342,7 @@ async function run() {
       log.commitId = gitEntry.hash;
       log.createdAt = gitEntry.date;
     } else {
-      // Historical fallback descending time
+      // Descending timestamp distribution in Bangladesh Standard Time (UTC+6)
       const reverseRank = allLogs.length - idx;
       const totalMinutes = 10 * 60 + Math.floor((reverseRank * (6 * 60)) / Math.max(1, allLogs.length));
       const hour = Math.floor(totalMinutes / 60);

@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import dotenv from "dotenv";
+import { execSync } from "child_process";
 import { queryD1, initD1Schema } from "./config/d1";
 import { randomUUID } from "crypto";
 
@@ -294,6 +295,50 @@ const runMigration = async () => {
     { file: path.join(B2B_LOGS_DIR, "TripLeader", "TL01-TL100.md"), scope: "tripleader" },
   ];
 
+  const RAFFLESIA_DIR = "D:\\B2B\\rafflesia";
+  const gitCommitMap = new Map<string, { hash: string; date: string }>();
+
+  if (fs.existsSync(RAFFLESIA_DIR)) {
+    try {
+      const gitOutput = execSync('git log --all --pretty=format:"%h|%ci|%s"', {
+        cwd: RAFFLESIA_DIR,
+        encoding: "utf-8",
+        stdio: ["ignore", "pipe", "ignore"],
+      });
+      const lines = gitOutput.split("\n");
+      for (const line of lines) {
+        const parts = line.split("|");
+        if (parts.length >= 3) {
+          const hash = parts[0].trim();
+          // Convert "+0600" / ISO to YYYY-MM-DD HH:mm:ss in BD Time
+          const rawDate = parts[1].trim();
+          const d = new Date(rawDate);
+          const yyyy = d.getFullYear();
+          const mm = String(d.getMonth() + 1).padStart(2, "0");
+          const dd = String(d.getDate()).padStart(2, "0");
+          const hh = String(d.getHours()).padStart(2, "0");
+          const min = String(d.getMinutes()).padStart(2, "0");
+          const ss = String(d.getSeconds()).padStart(2, "0");
+          const date = `${yyyy}-${mm}-${dd} ${hh}:${min}:${ss}`;
+
+          const subject = parts.slice(2).join("|").trim();
+          
+          // Match by Log ID (e.g. SM15, SM-15, TL-15, ITC-39, R05)
+          const idMatch = /^(?:##\s*)?([A-Za-z0-9_/-]+)[:\s(]/i.exec(subject);
+          if (idMatch) {
+            const cleanId = idMatch[1].toUpperCase().replace(/^RH\//, "").replace(/-/g, "");
+            gitCommitMap.set(cleanId, { hash, date });
+          }
+          // Also match exact short hash
+          gitCommitMap.set(hash.toLowerCase(), { hash, date });
+        }
+      }
+      console.log(`📦 Loaded ${gitCommitMap.size} authentic git commit entries from Rafflesia`);
+    } catch (e) {
+      console.warn("Could not read git log from Rafflesia:", e);
+    }
+  }
+
   let totalParsed = 0;
 
   for (const track of logFilesToParse) {
@@ -307,19 +352,39 @@ const runMigration = async () => {
     const totalLogsInTrack = parsedLogs.length;
     for (let idx = 0; idx < parsedLogs.length; idx++) {
       const log = parsedLogs[idx];
+      const cleanIdKey = log.id.toUpperCase().replace(/-/g, "");
       
-      // Calculate realistic descending Bangladesh Time (UTC+6)
-      let dateBase = log.createdAt || "2026-08-25";
-      if (dateBase.length === 10) {
-        // e.g. "2026-08-25" -> distribute between 10:00 AM and 07:30 PM BD Time
-        const reverseRank = totalLogsInTrack - idx; // Higher rank = later in the day
-        const hour = 10 + Math.floor((reverseRank * 9) / Math.max(1, totalLogsInTrack));
-        const minute = (reverseRank * 17) % 60;
-        const second = (reverseRank * 23) % 60;
-        const hh = String(hour).padStart(2, "0");
-        const mm = String(minute).padStart(2, "0");
-        const ss = String(second).padStart(2, "0");
-        log.createdAt = `${dateBase} ${hh}:${mm}:${ss}`;
+      // 1. Check if an authentic git commit exists for this Log ID or commit hash
+      const gitEntry = gitCommitMap.get(cleanIdKey) || (log.commitId ? gitCommitMap.get(log.commitId.toLowerCase()) : null);
+      if (gitEntry) {
+        log.commitId = gitEntry.hash;
+        log.createdAt = gitEntry.date;
+      } else {
+        // Fallback for older historical logs without direct commit match
+        let dateBase = log.createdAt || "2026-08-25";
+        if (dateBase.length === 10) {
+          if (track.scope === "tripleader") {
+            const offset = totalLogsInTrack - idx;
+            const totalMinutes = 9 * 60 + 15 + Math.floor((offset * (3 * 60)) / Math.max(1, totalLogsInTrack));
+            const hour = Math.floor(totalMinutes / 60);
+            const minute = totalMinutes % 60;
+            const second = (offset * 19) % 60;
+            const hh = String(hour).padStart(2, "0");
+            const mm = String(minute).padStart(2, "0");
+            const ss = String(second).padStart(2, "0");
+            log.createdAt = `${dateBase} ${hh}:${mm}:${ss}`;
+          } else {
+            const reverseRank = totalLogsInTrack - idx;
+            const totalMinutes = 10 * 60 + Math.floor((reverseRank * (6 * 60)) / Math.max(1, totalLogsInTrack));
+            const hour = Math.floor(totalMinutes / 60);
+            const minute = totalMinutes % 60;
+            const second = (reverseRank * 17) % 60;
+            const hh = String(hour).padStart(2, "0");
+            const mm = String(minute).padStart(2, "0");
+            const ss = String(second).padStart(2, "0");
+            log.createdAt = `${dateBase} ${hh}:${mm}:${ss}`;
+          }
+        }
       }
 
       const existing = await queryD1(`SELECT id FROM logs WHERE project_slug = ? AND id = ?`, [PROJECT_SLUG, log.id]);

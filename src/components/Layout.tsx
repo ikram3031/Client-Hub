@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Outlet, useNavigate, useLocation, NavLink } from 'react-router';
 import { Sidebar } from './Sidebar';
-import { ChevronRight, BookOpen, History, Plus, Layers, ChevronDown } from 'lucide-react';
+import { ChevronRight, BookOpen, History, Plus, Layers, ChevronDown, RotateCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { ThemeToggle } from './ThemeToggle';
@@ -11,6 +11,7 @@ export const Layout: React.FC = () => {
   const [projects, setProjects] = useState<any[]>([]);
   const [projectDocs, setProjectDocs] = useState<any[]>([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false); // Closed by default as requested
+  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -18,30 +19,43 @@ export const Layout: React.FC = () => {
   const pathParts = location.pathname.split('/').filter(Boolean);
   const currentProject = pathParts[0] || 'docsnlogs';
 
-  useEffect(() => {
-    fetch('/api/projects')
-      .then(res => res.json())
-      .then(data => {
-        const list = Array.isArray(data) ? data : (data.projects || []);
-        setProjects(list);
-        if (!pathParts[0] && list.length > 0) {
-          navigate(`/${list[0].slug}/docs`, { replace: true });
-        }
-      })
-      .catch(err => console.error("Error fetching projects:", err));
-  }, []);
+  const fetchProjectsAndDocs = async () => {
+    try {
+      const pRes = await fetch('/api/projects');
+      const pData = await pRes.json();
+      const pList = Array.isArray(pData) ? pData : (pData.projects || []);
+      setProjects(pList);
+      if (!pathParts[0] && pList.length > 0) {
+        navigate(`/${pList[0].slug}/docs`, { replace: true });
+      }
 
-  // Fetch docs for current project to populate top nav dynamic categories
+      if (currentProject) {
+        const dRes = await fetch(`/api/projects/${currentProject}/docs`);
+        const dData = await dRes.json();
+        const dList = Array.isArray(dData) ? dData : (dData.docs || []);
+        setProjectDocs(dList);
+      }
+    } catch (err) {
+      console.error("Error fetching data:", err);
+    }
+  };
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await fetchProjectsAndDocs();
+      // Dispatch global event for active page views (DocsPage, LogsPage) to re-fetch
+      window.dispatchEvent(new CustomEvent('docsnlogs:refresh'));
+    } catch (err) {
+      console.error("Refresh failed:", err);
+    } finally {
+      setTimeout(() => setIsRefreshing(false), 500);
+    }
+  };
+
   useEffect(() => {
-    if (!currentProject) return;
-    fetch(`/api/projects/${currentProject}/docs`)
-      .then(res => res.json())
-      .then(data => {
-        const list = Array.isArray(data) ? data : (data.docs || []);
-        setProjectDocs(list);
-      })
-      .catch(err => console.error("Error fetching project docs:", err));
-  }, [currentProject, location.pathname]);
+    fetchProjectsAndDocs();
+  }, [currentProject]);
 
   const handleProjectChange = (slug: string) => {
     navigate(`/${slug}/docs`);
@@ -158,8 +172,20 @@ export const Layout: React.FC = () => {
             </NavLink>
           </div>
 
-          {/* Right Side: New Doc CTA + Theme Toggle */}
+          {/* Right Side: Refresh Button + New Doc CTA + Theme Toggle */}
           <div className="flex items-center gap-2 shrink-0">
+            {/* Refresh Data Button */}
+            <button
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold rounded-lg bg-card hover:bg-muted border border-border text-foreground transition cursor-pointer active:scale-95 disabled:opacity-50 shadow-xs"
+              title="Refresh Data (fetch latest docs & logs from Cloudflare D1)"
+              aria-label="Refresh Data"
+            >
+              <RotateCw className={cn("w-3.5 h-3.5 text-primary", isRefreshing && "animate-spin")} />
+              <span className="hidden sm:inline">Refresh</span>
+            </button>
+
             <NavLink
               to={`/${currentProject}/docs/edit`}
               className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-lg bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition cursor-pointer"

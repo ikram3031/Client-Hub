@@ -176,11 +176,21 @@ export const LogsPage: React.FC<LogsPageProps> = ({ projectSlug }) => {
     );
   };
 
+  const [refreshCount, setRefreshCount] = useState(0);
+
+  useEffect(() => {
+    const handleGlobalRefresh = () => {
+      setRefreshCount(c => c + 1);
+    };
+    window.addEventListener('docsnlogs:refresh', handleGlobalRefresh);
+    return () => window.removeEventListener('docsnlogs:refresh', handleGlobalRefresh);
+  }, []);
+
   useEffect(() => {
     const fetchLogs = async () => {
       setLoading(true);
       try {
-        const res = await fetch(`/api/projects/${projectSlug}/logs?limit=100`);
+        const res = await fetch(`/api/projects/${projectSlug}/logs?limit=250`);
         const data = await res.json();
         const list = Array.isArray(data) ? data : (data.logs || []);
         setLogs(list);
@@ -191,7 +201,7 @@ export const LogsPage: React.FC<LogsPageProps> = ({ projectSlug }) => {
       }
     };
     fetchLogs();
-  }, [projectSlug]);
+  }, [projectSlug, refreshCount]);
 
   const handleCopy = async (text: string, id: string) => {
     try {
@@ -634,9 +644,9 @@ export const LogsPage: React.FC<LogsPageProps> = ({ projectSlug }) => {
                       onClick={() => toggleListItem(log.id)}
                       className="p-3 sm:p-3.5 flex items-center justify-between gap-3 cursor-pointer select-none hover:bg-muted/40 transition-colors"
                     >
-                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                      <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
                         {/* Expand Chevron */}
-                        <div className="text-muted-foreground shrink-0">
+                        <div className="text-muted-foreground shrink-0 w-4 flex items-center justify-center">
                           {isExpanded ? (
                             <ChevronDown className="w-4 h-4 text-primary transition-transform" />
                           ) : (
@@ -644,24 +654,32 @@ export const LogsPage: React.FC<LogsPageProps> = ({ projectSlug }) => {
                           )}
                         </div>
 
-                        {/* ID Badge */}
-                        <span className={cn("font-mono font-bold text-xs px-2 py-0.5 rounded border shrink-0", getScopeBadgeStyle(log.id, log.scope))}>
+                        {/* ID Badge - Unified Fixed Width */}
+                        <span
+                          className={cn(
+                            "font-mono font-bold text-xs px-1.5 py-0.5 rounded border shrink-0 inline-flex items-center justify-center w-[78px] sm:w-[84px] text-center tracking-tight",
+                            getScopeBadgeStyle(log.id, log.scope)
+                          )}
+                        >
                           #{log.id}
                         </span>
 
-                        {/* Action Badge */}
-                        <Badge variant="secondary" className="capitalize text-[10px] font-semibold shrink-0 hidden sm:inline-flex">
+                        {/* Action Badge - Unified Fixed Width */}
+                        <Badge
+                          variant="secondary"
+                          className="capitalize text-[10px] font-semibold shrink-0 hidden sm:inline-flex w-[48px] justify-center text-center px-0 py-0.5"
+                        >
                           {log.action || 'feat'}
                         </Badge>
 
-                        {/* Summary */}
+                        {/* Summary - Perfectly aligned across all rows */}
                         <span className="text-xs font-semibold text-foreground truncate flex-1">
                           {capitalizedSummary}
                         </span>
                       </div>
 
                       {/* Right metadata: Commit Hash + Timestamp */}
-                      <div className="flex items-center gap-2 shrink-0 text-xs">
+                      <div className="flex items-center gap-2 sm:gap-3 shrink-0 text-xs">
                         {commitHash && (
                           <div
                             onClick={(e) => {
@@ -676,7 +694,7 @@ export const LogsPage: React.FC<LogsPageProps> = ({ projectSlug }) => {
                             {copiedId === `list-hash-${log.id}` ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3 opacity-60" />}
                           </div>
                         )}
-                        <span className="text-[11px] text-muted-foreground font-mono hidden md:inline">
+                        <span className="text-[11px] text-muted-foreground font-mono hidden md:inline w-[116px] text-right">
                           {formattedDate}
                         </span>
                       </div>

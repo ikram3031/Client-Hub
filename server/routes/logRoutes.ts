@@ -108,7 +108,12 @@ logRouter.get("/", async (req: Request, res: Response) => {
 logRouter.post("/", async (req: Request, res: Response) => {
   try {
     const projectSlug = req.params.projectSlug as string;
-    let { id, logId, scope, featureKey, subTaskKey, action, summary, promptUsed, changedFiles, diffSummary, commitId } = req.body;
+    let { id, logId, scope, featureKey, subTaskKey, action, summary } = req.body;
+
+    const rawPrompt = req.body.promptUsed || req.body.prompt_used || "";
+    const rawFiles = req.body.changedFiles || req.body.changed_files || [];
+    const rawCommitId = req.body.commitId || req.body.commit_id || "";
+    const rawDiffSummary = req.body.diffSummary || req.body.diff_summary || "";
 
     if (!summary && !req.body.message) {
       return res.status(400).json({ success: false, error: "Summary or commit message is required" });
@@ -118,68 +123,60 @@ logRouter.post("/", async (req: Request, res: Response) => {
     const parsed = parseCommitStandard(rawMessage);
 
     let finalLogId = id || logId || (parsed ? parsed.logId : null);
-    let finalScope = scope || (parsed ? parsed.scope : "frontend");
+    let finalScope = scope || (parsed ? parsed.scope : "itc");
     let finalAction = action || (parsed ? parsed.type : "feat");
     let finalSummary = parsed ? parsed.description : rawMessage;
     if (finalSummary) {
       finalSummary = finalSummary.charAt(0).toUpperCase() + finalSummary.slice(1);
     }
 
-    // If no LogID provided, calculate next sequential ID based on scope (e.g. AB01, AD01, AA01)
+    // If no LogID provided, calculate next sequential ID based on scope
     const prefix = getScopePrefix(finalScope);
     if (!finalLogId) {
       finalLogId = await getNextSequentialLogId(projectSlug, prefix);
     } else {
       finalLogId = String(finalLogId).toUpperCase().trim();
-      // Check if provided Log ID is already in use in this project; if so, assign next available ID
-      const existing = await queryD1(`SELECT id FROM logs WHERE project_slug = ? AND id = ?`, [projectSlug, finalLogId]);
-      if (existing.length > 0) {
-        finalLogId = await getNextSequentialLogId(projectSlug, prefix);
-      }
     }
 
     const cleanFeatureKey = featureKey ? String(featureKey).toUpperCase() : null;
     const cleanSubTaskKey = subTaskKey ? String(subTaskKey).toUpperCase() : null;
-    const cleanFiles = Array.isArray(changedFiles) ? changedFiles : [];
+    const cleanFiles = Array.isArray(rawFiles) ? rawFiles : [];
 
-    // Auto-create Feature if key provided
-    if (cleanFeatureKey) {
-      const featExists = await queryD1(`SELECT * FROM features WHERE project_slug = ? AND key = ?`, [projectSlug, cleanFeatureKey]);
-      if (featExists.length === 0) {
-        await queryD1(
-          `INSERT INTO features (id, project_slug, key, scope, title, description, status) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-          [randomUUID(), projectSlug, cleanFeatureKey, finalScope.toLowerCase(), `Feature ${cleanFeatureKey}`, "Auto-created by AI Log Ingestion", "in_progress"]
-        );
-      }
+    // Check if provided Log ID is already in use in this project; if so, update it
+    const existing = await queryD1(`SELECT id FROM logs WHERE project_slug = ? AND id = ?`, [projectSlug, finalLogId]);
+    if (existing.length > 0) {
+      await queryD1(
+        `UPDATE logs SET scope = ?, action = ?, summary = ?, prompt_used = ?, changed_files = ?, diff_summary = ?, commit_id = ? WHERE project_slug = ? AND id = ?`,
+        [
+          finalScope.toLowerCase(),
+          finalAction.toLowerCase(),
+          finalSummary,
+          rawPrompt,
+          JSON.stringify(cleanFiles),
+          rawDiffSummary,
+          rawCommitId,
+          projectSlug,
+          finalLogId,
+        ]
+      );
+    } else {
+      await queryD1(
+        `INSERT INTO logs (id, project_slug, scope, feature_key, sub_task_key, action, summary, prompt_used, changed_files, diff_summary, commit_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          finalLogId,
+          projectSlug,
+          finalScope.toLowerCase(),
+          cleanFeatureKey,
+          cleanSubTaskKey,
+          finalAction.toLowerCase(),
+          finalSummary,
+          rawPrompt,
+          JSON.stringify(cleanFiles),
+          rawDiffSummary,
+          rawCommitId,
+        ]
+      );
     }
-
-    // Auto-create SubTask if key provided
-    if (cleanSubTaskKey && cleanFeatureKey) {
-      const taskExists = await queryD1(`SELECT * FROM subtasks WHERE project_slug = ? AND key = ?`, [projectSlug, cleanSubTaskKey]);
-      if (taskExists.length === 0) {
-        await queryD1(
-          `INSERT INTO subtasks (id, project_slug, key, feature_key, title, status, notes) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-          [randomUUID(), projectSlug, cleanSubTaskKey, cleanFeatureKey, `Task ${cleanSubTaskKey}`, "in_progress", "Auto-created by AI Log Ingestion"]
-        );
-      }
-    }
-
-    await queryD1(
-      `INSERT INTO logs (id, project_slug, scope, feature_key, sub_task_key, action, summary, prompt_used, changed_files, diff_summary, commit_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        finalLogId,
-        projectSlug,
-        finalScope.toLowerCase(),
-        cleanFeatureKey,
-        cleanSubTaskKey,
-        finalAction || "feat",
-        finalSummary,
-        promptUsed || "",
-        JSON.stringify(cleanFiles),
-        diffSummary || "",
-        commitId || "",
-      ]
-    );
 
     const created = await queryD1(`SELECT * FROM logs WHERE id = ?`, [finalLogId]);
     res.status(201).json({

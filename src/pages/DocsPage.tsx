@@ -14,6 +14,15 @@ export const DocsPage: React.FC = () => {
 
   const activeDocSlug = searchParams.get('doc');
   const activeCategory = searchParams.get('category');
+  const [refreshCount, setRefreshCount] = useState(0);
+
+  useEffect(() => {
+    const handleGlobalRefresh = () => {
+      setRefreshCount(c => c + 1);
+    };
+    window.addEventListener('docsnlogs:refresh', handleGlobalRefresh);
+    return () => window.removeEventListener('docsnlogs:refresh', handleGlobalRefresh);
+  }, []);
 
   useEffect(() => {
     setLoading(true);
@@ -28,7 +37,7 @@ export const DocsPage: React.FC = () => {
         console.error("Failed to load docs:", err);
         setLoading(false);
       });
-  }, [currentProject]);
+  }, [currentProject, refreshCount]);
 
   if (loading) {
     return (

@@ -1,0 +1,14 @@
+﻿services:
+  docsnlogs:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: docsnlogs-hub
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+      - PORT=5000

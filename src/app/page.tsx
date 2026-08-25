@@ -160,7 +160,7 @@ const HomePage: React.FC = () => {
       : null;
 
   return (
-    <div className="flex flex-col h-screen w-screen theme-bg-primary theme-text-primary overflow-hidden font-sans select-none">
+    <div className="flex flex-col h-screen w-screen bg-background text-foreground overflow-hidden font-sans select-none">
       {/* 1. Global Top Navigation Bar */}
       <TopNavbar
         activeProject={activeProject}
@@ -222,10 +222,10 @@ const HomePage: React.FC = () => {
         </div>
 
         {/* Main Content Viewport */}
-        <main className="flex-1 flex flex-col h-full overflow-hidden theme-bg-primary relative">
+        <main className="flex-1 flex flex-col h-full overflow-hidden bg-background relative">
           {isLoading ? (
-            <div className="flex-1 flex flex-col items-center justify-center theme-text-muted gap-3">
-              <div className="w-8 h-8 rounded-full border-2 border-emerald-500/20 border-t-emerald-500 animate-spin" />
+            <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground gap-3">
+              <div className="w-8 h-8 rounded-full border-2 border-primary/20 border-t-primary animate-spin" />
               <span className="text-xs font-mono font-medium">Syncing with Cloudflare D1...</span>
             </div>
           ) : (
@@ -280,6 +280,7 @@ const HomePage: React.FC = () => {
                   doc={selectedDoc}
                   allDocs={docs}
                   projectSlug={activeProjectSlug}
+                  projectName={activeProject.name}
                   onDocUpdated={() => loadProjectData(activeProjectSlug)}
                   onDocDeleted={() => {
                     loadProjectData(activeProjectSlug);

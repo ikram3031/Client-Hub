@@ -3,6 +3,9 @@
 import React, { useState } from "react";
 import { X, Layers, Plus, AlertCircle } from "lucide-react";
 import { createProject } from "@/lib/api";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
 interface NewProjectModalProps {
   isOpen: boolean;
@@ -25,9 +28,9 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({
   onClose,
   onProjectCreated,
 }) => {
-  const [name, setName] = useState<string>("");
-  const [slug, setSlug] = useState<string>("");
-  const [description, setDescription] = useState<string>("");
+  const [name, setName] = useState<string>("Client ERP");
+  const [slug, setSlug] = useState<string>("client-erp");
+  const [description, setDescription] = useState<string>("Client ERP System and Core Business Logic");
   const [categories, setCategories] = useState<string>("Architecture, Backend, Frontend, Dashboard");
   const [scopes, setScopes] = useState<string>("frontend, backend, dashboard");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -79,99 +82,91 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-4 animate-in fade-in select-none">
-      <div className="w-full max-w-lg theme-bg-card border theme-border rounded-2xl shadow-2xl overflow-hidden font-sans animate-in zoom-in-95">
+      <div className="w-full max-w-lg bg-card border border-border rounded-2xl shadow-2xl overflow-hidden font-sans animate-in zoom-in-95">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b theme-border theme-bg-secondary">
-          <div className="flex items-center gap-2.5 theme-text-primary font-bold text-base">
-            <Layers className="w-4 h-4 text-emerald-500" />
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-muted/30">
+          <div className="flex items-center space-x-2 text-foreground font-bold text-base">
+            <Layers className="w-4 h-4 text-primary" />
             <span>Onboard New Project</span>
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded-lg theme-text-muted hover:theme-text-primary theme-bg-hover transition-colors"
+            className="p-1 rounded-lg text-muted-foreground hover:text-foreground transition-colors text-lg"
             type="button"
           >
-            <X className="w-4 h-4" />
+            ×
           </button>
         </div>
 
         {/* Form */}
         <form onSubmit={handleSubmitProject} className="p-6 space-y-4 text-xs">
           {error && (
-            <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 flex items-center gap-2">
+            <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive flex items-center space-x-2">
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{error}</span>
             </div>
           )}
 
           <div>
-            <label className="block text-[11px] font-semibold theme-text-muted mb-1 uppercase font-mono">
+            <label className="block text-[11px] font-semibold text-muted-foreground mb-1 uppercase font-mono">
               Project Name
             </label>
-            <input
-              type="text"
-              placeholder="e.g. Acme ERP System"
+            <Input
+              placeholder="e.g. Core API"
               value={name}
               onChange={(e) => handleNameChange(e.target.value)}
-              className="w-full theme-bg-primary border theme-border rounded-lg px-3 py-2 theme-text-primary text-sm font-semibold focus:outline-none"
               required
             />
           </div>
 
           <div>
-            <label className="block text-[11px] font-semibold theme-text-muted mb-1 uppercase font-mono">
+            <label className="block text-[11px] font-semibold text-muted-foreground mb-1 uppercase font-mono">
               Project Slug (Unique identifier)
             </label>
-            <input
-              type="text"
+            <Input
               value={slug}
               onChange={(e) => setSlug(e.target.value)}
-              className="w-full theme-bg-primary border theme-border rounded-lg px-3 py-2 theme-text-primary font-mono focus:outline-none"
               required
             />
           </div>
 
           <div>
-            <label className="block text-[11px] font-semibold theme-text-muted mb-1 uppercase font-mono">
+            <label className="block text-[11px] font-semibold text-muted-foreground mb-1 uppercase font-mono">
               Description
             </label>
-            <textarea
+            <Textarea
               rows={2}
               placeholder="Brief description of the workspace project..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full theme-bg-primary border theme-border rounded-lg p-3 theme-text-primary focus:outline-none"
             />
           </div>
 
           <div>
-            <label className="block text-[11px] font-semibold theme-text-muted mb-1 uppercase font-mono">
+            <label className="block text-[11px] font-semibold text-muted-foreground mb-1 uppercase font-mono">
               Documentation Categories (Comma-separated)
             </label>
-            <input
-              type="text"
+            <Input
               value={categories}
               onChange={(e) => setCategories(e.target.value)}
-              className="w-full theme-bg-primary border theme-border rounded-lg px-3 py-2 theme-text-primary focus:outline-none"
             />
           </div>
 
-          <div className="flex justify-end gap-2 pt-2 border-t theme-border">
-            <button
+          <div className="flex justify-end space-x-2 pt-3 border-t border-border">
+            <Button
+              variant="outline"
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-lg theme-text-muted hover:theme-text-primary transition-colors"
             >
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
               disabled={isSubmitting}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition-all disabled:opacity-50 shadow-sm cursor-pointer"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-4 h-4 mr-1" />
               <span>{isSubmitting ? "Onboarding..." : "Onboard Project"}</span>
-            </button>
+            </Button>
           </div>
         </form>
       </div>

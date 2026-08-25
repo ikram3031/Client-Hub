@@ -62,22 +62,22 @@ export const TableOfContents: React.FC<TableOfContentsProps> = ({
 
   return (
     <aside className="hidden xl:block w-64 shrink-0 pl-6 py-6 sticky top-0 h-fit max-h-[calc(100vh-4rem)] overflow-y-auto custom-scrollbar select-none">
-      <div className="flex items-center gap-2 pb-3 mb-3 border-b theme-border text-xs font-bold uppercase tracking-wider theme-text-muted font-mono">
-        <AlignLeft className="w-3.5 h-3.5 theme-accent" />
+      <div className="flex items-center space-x-2 pb-3 mb-3 border-b border-border text-xs font-bold uppercase tracking-wider text-muted-foreground font-mono">
+        <AlignLeft className="w-3.5 h-3.5 text-primary" />
         <span>On this page</span>
       </div>
 
-      <nav className="space-y-1.5 text-xs">
+      <nav className="space-y-1 text-xs">
         {headings.map((h, i) => (
           <button
             key={`${h.id}-${i}`}
             onClick={() => handleScrollToHeading(h.id)}
-            className={`block w-full text-left transition-all py-1 px-2 rounded-md truncate cursor-pointer ${
+            className={`block w-full text-left transition-all py-1.5 px-2 rounded-md truncate cursor-pointer ${
               h.level === 3 ? "pl-5 text-[11px]" : "font-medium"
             } ${
               activeId === h.id
-                ? "theme-accent font-semibold theme-accent-bg border-l-2 theme-accent-border"
-                : "theme-text-muted hover:theme-text-primary hover:bg-zinc-100 dark:hover:bg-zinc-800/40"
+                ? "bg-primary/10 text-primary font-semibold border-l-2 border-primary"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
             }`}
             title={h.text}
             type="button"
@@ -88,11 +88,11 @@ export const TableOfContents: React.FC<TableOfContentsProps> = ({
       </nav>
 
       {/* Quick Community & Edit Actions */}
-      <div className="mt-8 pt-4 border-t theme-border space-y-2 text-xs">
+      <div className="mt-8 pt-4 border-t border-border space-y-2 text-xs">
         {onEditClick && (
           <button
             onClick={onEditClick}
-            className="flex items-center gap-2 theme-text-muted hover:theme-accent transition-colors w-full text-left py-1 cursor-pointer"
+            className="flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-colors w-full text-left py-1 cursor-pointer"
             type="button"
           >
             <Edit3 className="w-3.5 h-3.5" />
@@ -103,7 +103,7 @@ export const TableOfContents: React.FC<TableOfContentsProps> = ({
           href="https://github.com"
           target="_blank"
           rel="noreferrer"
-          className="flex items-center gap-2 theme-text-muted hover:theme-text-primary transition-colors py-1"
+          className="flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-colors py-1"
         >
           <MessageSquare className="w-3.5 h-3.5" />
           <span>Documentation Feedback</span>

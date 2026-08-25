@@ -3,6 +3,9 @@
 import React, { useState, useEffect } from "react";
 import { X, FileText, Plus, AlertCircle } from "lucide-react";
 import { saveDoc } from "@/lib/api";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
 interface NewDocModalProps {
   isOpen: boolean;
@@ -35,7 +38,7 @@ export const NewDocModal: React.FC<NewDocModalProps> = ({
   const [category, setCategory] = useState<string>(defaultCategory || categories[0] || "Architecture");
   const [slug, setSlug] = useState<string>("");
   const [content, setContent] = useState<string>(
-    "# Document Title\n\n## Overview\nProvide a high-level overview of the architectural component or guide.\n\n```bash\n# Run initial setup\nnpm install\n```\n"
+    "## Overview\n\nProvide an architectural overview and guidelines here.\n\n```ts\n// Example implementation snippet\nexport const example = () => {\n  console.log('docsNlogs Edge Hub');\n};\n```\n"
   );
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
@@ -95,26 +98,26 @@ export const NewDocModal: React.FC<NewDocModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-4 animate-in fade-in select-none">
-      <div className="w-full max-w-xl theme-bg-card border theme-border rounded-2xl shadow-2xl overflow-hidden font-sans animate-in zoom-in-95">
+      <div className="w-full max-w-xl bg-card border border-border rounded-2xl shadow-2xl overflow-hidden font-sans animate-in zoom-in-95">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b theme-border theme-bg-secondary">
-          <div className="flex items-center gap-2.5 theme-text-primary font-bold text-base">
-            <FileText className="w-4 h-4 text-emerald-500" />
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-muted/30">
+          <div className="flex items-center space-x-2 text-foreground font-bold text-base">
+            <FileText className="w-4 h-4 text-primary" />
             <span>Create Documentation Page</span>
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded-lg theme-text-muted hover:theme-text-primary theme-bg-hover transition-colors"
+            className="p-1 rounded-lg text-muted-foreground hover:text-foreground transition-colors text-lg"
             type="button"
           >
-            <X className="w-4 h-4" />
+            ×
           </button>
         </div>
 
         {/* Form */}
         <form onSubmit={handleSubmitDoc} className="p-6 space-y-4 text-xs">
           {error && (
-            <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 flex items-center gap-2">
+            <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive flex items-center space-x-2">
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{error}</span>
             </div>
@@ -122,13 +125,13 @@ export const NewDocModal: React.FC<NewDocModalProps> = ({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-[11px] font-semibold theme-text-muted mb-1 uppercase font-mono">
+              <label className="block text-[11px] font-semibold text-muted-foreground mb-1 uppercase font-mono">
                 Category
               </label>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="w-full theme-bg-primary border theme-border rounded-lg px-3 py-2 theme-text-primary focus:outline-none"
+                className="w-full h-9 bg-background border border-border rounded-lg px-3 py-1 text-xs text-foreground focus:outline-none"
               >
                 {categories.map((c) => (
                   <option key={c} value={c}>
@@ -139,61 +142,58 @@ export const NewDocModal: React.FC<NewDocModalProps> = ({
             </div>
 
             <div>
-              <label className="block text-[11px] font-semibold theme-text-muted mb-1 uppercase font-mono">
+              <label className="block text-[11px] font-semibold text-muted-foreground mb-1 uppercase font-mono">
                 URL Slug
               </label>
-              <input
+              <Input
                 type="text"
                 value={slug}
                 onChange={(e) => setSlug(e.target.value)}
-                className="w-full theme-bg-primary border theme-border rounded-lg px-3 py-2 theme-text-primary font-mono focus:outline-none"
                 required
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-[11px] font-semibold theme-text-muted mb-1 uppercase font-mono">
+            <label className="block text-[11px] font-semibold text-muted-foreground mb-1 uppercase font-mono">
               Document Title
             </label>
-            <input
+            <Input
               type="text"
-              placeholder="e.g. Cloudflare D1 Architecture"
+              placeholder="e.g. Cloudflare D1 Storage"
               value={title}
               onChange={(e) => handleTitleChange(e.target.value)}
-              className="w-full theme-bg-primary border theme-border rounded-lg px-3 py-2 theme-text-primary text-sm font-semibold focus:outline-none"
               required
             />
           </div>
 
           <div>
-            <label className="block text-[11px] font-semibold theme-text-muted mb-1 uppercase font-mono">
+            <label className="block text-[11px] font-semibold text-muted-foreground mb-1 uppercase font-mono">
               Initial Markdown Content
             </label>
-            <textarea
+            <Textarea
               rows={7}
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              className="w-full theme-bg-primary border theme-border rounded-lg p-3 theme-text-primary font-mono text-xs focus:outline-none custom-scrollbar"
+              className="font-mono text-xs"
             />
           </div>
 
-          <div className="flex justify-end gap-2 pt-2 border-t theme-border">
-            <button
+          <div className="flex justify-end space-x-2 pt-3 border-t border-border">
+            <Button
+              variant="outline"
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-lg theme-text-muted hover:theme-text-primary transition-colors"
             >
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
               disabled={isSubmitting}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition-all disabled:opacity-50 shadow-sm cursor-pointer"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-4 h-4 mr-1" />
               <span>{isSubmitting ? "Creating..." : "Create Page"}</span>
-            </button>
+            </Button>
           </div>
         </form>
       </div>

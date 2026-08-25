@@ -4,34 +4,35 @@ import React, { useState, useEffect, useMemo } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import {
-  FileText,
   Edit3,
   Trash2,
   Save,
   X,
   Clock,
   User,
-  Tag,
   Folder,
-  ArrowLeft,
-  ArrowRight,
-  Sparkles,
-  Check,
+  ChevronLeft,
+  ChevronRight,
   Share2,
+  Check,
   Eye,
   BookOpen,
   Info,
-  AlertTriangle,
-  Lightbulb,
+  Layers,
 } from "lucide-react";
 import { DocItem, updateDoc, deleteDoc } from "@/lib/api";
 import { CodeBlock } from "@/components/CodeBlock";
 import { TableOfContents } from "@/components/TableOfContents";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
 interface DocReaderProps {
   doc: DocItem;
   allDocs?: DocItem[];
   projectSlug: string;
+  projectName?: string;
   onDocUpdated: () => void;
   onDocDeleted: () => void;
   onNavigateFolder: (category: string) => void;
@@ -70,6 +71,7 @@ export const DocReader: React.FC<DocReaderProps> = ({
   doc,
   allDocs = [],
   projectSlug,
+  projectName,
   onDocUpdated,
   onDocDeleted,
   onNavigateFolder,
@@ -97,7 +99,6 @@ export const DocReader: React.FC<DocReaderProps> = ({
   const { prevDoc, nextDoc } = useMemo(() => {
     if (!allDocs || allDocs.length === 0) return { prevDoc: null, nextDoc: null };
 
-    // Sort documents with same category grouped together
     const sorted = [...allDocs].sort((a, b) => {
       if (a.category === b.category) {
         return a.title.localeCompare(b.title);
@@ -159,104 +160,111 @@ export const DocReader: React.FC<DocReaderProps> = ({
   const authorBadge = doc.last_edited_by || "AI Architect";
 
   return (
-    <div className="flex-1 flex overflow-hidden font-sans theme-bg-primary theme-text-primary">
+    <div className="flex-1 flex overflow-hidden font-sans bg-background text-foreground">
       {/* Center Reading Container */}
-      <div className="flex-1 flex flex-col h-full overflow-y-auto custom-scrollbar px-6 py-6 md:px-12 md:py-8">
+      <div className="flex-1 flex flex-col h-full overflow-y-auto custom-scrollbar px-6 py-8 md:px-12 md:py-10">
         <div className="max-w-4xl w-full mx-auto pb-16">
           {/* 1. Subtle Breadcrumb */}
-          <nav className="flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400 mb-6 font-mono select-none overflow-x-auto">
+          <nav className="flex items-center space-x-2 text-xs text-muted-foreground mb-8 select-none overflow-x-auto">
             <button
               onClick={onNavigateHome}
-              className="hover:theme-accent transition-colors cursor-pointer shrink-0 font-medium"
+              className="hover:text-foreground transition-colors cursor-pointer font-medium"
               type="button"
             >
               Docs
             </button>
-            <span className="opacity-40">/</span>
+            <ChevronRight className="h-3.5 w-3.5 opacity-50 shrink-0" />
             <button
-              onClick={() => onNavigateFolder(doc.category)}
-              className="hover:theme-accent transition-colors cursor-pointer flex items-center gap-1 shrink-0 font-medium"
+              onClick={onNavigateHome}
+              className="hover:text-foreground transition-colors cursor-pointer font-medium shrink-0"
               type="button"
             >
-              <Folder className="w-3 h-3 text-amber-500" />
+              {projectName || projectSlug}
+            </button>
+            <ChevronRight className="h-3.5 w-3.5 opacity-50 shrink-0" />
+            <button
+              onClick={() => onNavigateFolder(doc.category)}
+              className="hover:text-foreground transition-colors cursor-pointer flex items-center gap-1 shrink-0 font-medium"
+              type="button"
+            >
               <span>{doc.category}</span>
             </button>
-            <span className="opacity-40">/</span>
-            <span className="theme-text-primary font-semibold truncate shrink-0">
+            <ChevronRight className="h-3.5 w-3.5 opacity-50 shrink-0" />
+            <span className="text-foreground font-semibold truncate shrink-0">
               {doc.title}
             </span>
           </nav>
 
-          {/* 2. Document Header & Actions Bar */}
-          <div className="flex items-start justify-between gap-4 pb-6 mb-8 border-b theme-border">
+          {/* 2. Document Header & Metadata */}
+          <div className="flex items-start justify-between gap-4 pb-8 mb-8 border-b border-border">
             <div className="flex-1 min-w-0">
               {isEditing ? (
-                <div className="space-y-3">
+                <div className="space-y-4">
                   <div>
-                    <label className="block text-[11px] font-semibold uppercase theme-text-muted mb-1 font-mono">
+                    <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1 font-mono">
                       Document Title
                     </label>
-                    <input
+                    <Input
                       type="text"
                       value={editedTitle}
                       onChange={(e) => setEditedTitle(e.target.value)}
-                      className="w-full text-2xl md:text-3xl font-black theme-bg-card border theme-border rounded-xl px-4 py-2 theme-text-primary focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                      className="text-xl md:text-2xl font-bold h-11"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-semibold uppercase theme-text-muted mb-1 font-mono">
+                    <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1 font-mono">
                       Category
                     </label>
-                    <input
+                    <Input
                       type="text"
                       value={editedCategory}
                       onChange={(e) => setEditedCategory(e.target.value)}
-                      className="w-full max-w-xs text-xs theme-bg-card border theme-border rounded-lg px-3 py-1.5 theme-text-primary focus:outline-none"
+                      className="max-w-xs text-xs"
                     />
                   </div>
                 </div>
               ) : (
                 <>
                   <div className="flex items-center gap-2 mb-3">
-                    <span className="px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[11px] font-semibold border border-amber-500/20">
-                      {doc.category}
-                    </span>
-                    <span className="px-2 py-0.5 rounded-md theme-bg-secondary theme-text-muted text-[11px] font-mono border theme-border">
-                      /{doc.slug}
-                    </span>
+                    <Badge variant="amber">{doc.category}</Badge>
+                    <Badge variant="outline" className="font-mono text-[11px]">/{doc.slug}</Badge>
                   </div>
 
-                  <h1 className="text-3xl md:text-4xl lg:text-5xl font-black tracking-tight theme-text-primary mb-4 leading-[1.15]">
+                  <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight text-foreground mb-4 leading-tight">
                     {doc.title}
                   </h1>
 
                   {/* Metadata Row */}
-                  <div className="flex flex-wrap items-center gap-3 md:gap-5 text-xs theme-text-secondary">
+                  <div className="flex flex-wrap items-center gap-3 md:gap-4 text-xs text-muted-foreground">
                     {/* Author Badge */}
-                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 font-medium">
-                      <Sparkles className="w-3.5 h-3.5" />
+                    <div className="flex items-center space-x-1.5 bg-muted px-2.5 py-1 rounded-full text-xs font-medium text-foreground">
+                      <User className="h-3.5 w-3.5 text-muted-foreground" />
                       <span>{authorBadge}</span>
                     </div>
 
+                    <span>•</span>
+
                     {/* Last Updated */}
-                    <div className="flex items-center gap-1.5 theme-text-muted">
-                      <Clock className="w-3.5 h-3.5" />
-                      <span>Updated {formatTimestamp(doc.updated_at || doc.created_at)}</span>
+                    <div className="flex items-center gap-1.5">
+                      <Clock className="h-3.5 w-3.5" />
+                      <span>Last Updated {formatTimestamp(doc.updated_at || doc.created_at)}</span>
                     </div>
 
+                    <span>•</span>
+
                     {/* Reading Time */}
-                    <div className="flex items-center gap-1.5 theme-text-muted">
-                      <BookOpen className="w-3.5 h-3.5" />
+                    <div className="flex items-center gap-1.5">
+                      <BookOpen className="h-3.5 w-3.5" />
                       <span>{readingTime} min read</span>
                     </div>
 
                     {/* Tags */}
                     {doc.tags && doc.tags.length > 0 && (
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-1 ml-1">
                         {doc.tags.map((tag) => (
                           <span
                             key={tag}
-                            className="px-2 py-0.5 rounded-md theme-bg-secondary text-[11px] font-mono theme-text-muted border theme-border"
+                            className="px-2 py-0.5 rounded-md bg-muted/60 text-[11px] font-mono text-muted-foreground border border-border/50"
                           >
                             #{tag}
                           </span>
@@ -272,54 +280,55 @@ export const DocReader: React.FC<DocReaderProps> = ({
             <div className="flex items-center gap-2 shrink-0">
               {isEditing ? (
                 <>
-                  <button
+                  <Button
+                    variant="outline"
+                    size="sm"
                     onClick={() => setIsEditing(false)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium theme-bg-card theme-bg-hover theme-text-secondary rounded-lg border theme-border transition-all cursor-pointer"
-                    type="button"
                   >
                     <X className="w-3.5 h-3.5" />
                     <span>Cancel</span>
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    variant="emerald"
+                    size="sm"
                     onClick={handleSaveDoc}
                     disabled={isSaving}
-                    className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg transition-all cursor-pointer disabled:opacity-50 shadow-sm"
-                    type="button"
                   >
                     <Save className="w-3.5 h-3.5" />
                     <span>{isSaving ? "Saving..." : "Save Doc"}</span>
-                  </button>
+                  </Button>
                 </>
               ) : (
                 <>
-                  <button
+                  <Button
+                    variant="outline"
+                    size="icon"
                     onClick={handleCopyLink}
-                    className="p-2 rounded-lg theme-bg-card theme-bg-hover border theme-border theme-text-secondary hover:theme-text-primary transition-all cursor-pointer"
                     title="Copy Page URL"
-                    type="button"
                   >
                     {linkCopied ? (
                       <Check className="w-3.5 h-3.5 text-emerald-500" />
                     ) : (
-                      <Share2 className="w-3.5 h-3.5" />
+                      <Share2 className="w-3.5 h-3.5 text-muted-foreground" />
                     )}
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
                     onClick={() => setIsEditing(true)}
-                    className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold theme-bg-card theme-bg-hover theme-text-primary rounded-lg border theme-border transition-all cursor-pointer shadow-xs"
-                    type="button"
                   >
-                    <Edit3 className="w-3.5 h-3.5 theme-accent" />
+                    <Edit3 className="w-3.5 h-3.5 mr-1" />
                     <span>Edit</span>
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     onClick={handleDeleteDoc}
-                    className="p-2 rounded-lg text-red-500 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition-all cursor-pointer"
+                    className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                     title="Delete Document"
-                    type="button"
                   >
                     <Trash2 className="w-4 h-4" />
-                  </button>
+                  </Button>
                 </>
               )}
             </div>
@@ -328,14 +337,13 @@ export const DocReader: React.FC<DocReaderProps> = ({
           {/* 3. Main Content Viewport (Markdown Engine vs Fast Editor) */}
           {isEditing ? (
             <div className="space-y-4">
-              {/* Tab Navigation: Write vs Preview */}
-              <div className="flex items-center gap-2 border-b theme-border pb-2">
+              <div className="flex items-center gap-2 border-b border-border pb-2">
                 <button
                   onClick={() => setEditorTab("write")}
                   className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all cursor-pointer ${
                     editorTab === "write"
-                      ? "theme-accent-bg theme-accent border theme-accent-border"
-                      : "theme-text-muted hover:theme-text-primary"
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:text-foreground"
                   }`}
                   type="button"
                 >
@@ -348,8 +356,8 @@ export const DocReader: React.FC<DocReaderProps> = ({
                   onClick={() => setEditorTab("preview")}
                   className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all cursor-pointer ${
                     editorTab === "preview"
-                      ? "theme-accent-bg theme-accent border theme-accent-border"
-                      : "theme-text-muted hover:theme-text-primary"
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:text-foreground"
                   }`}
                   type="button"
                 >
@@ -362,16 +370,16 @@ export const DocReader: React.FC<DocReaderProps> = ({
 
               {editorTab === "write" ? (
                 <div>
-                  <textarea
+                  <Textarea
                     value={editedContent}
                     onChange={(e) => setEditedContent(e.target.value)}
                     rows={20}
-                    className="w-full p-4 font-mono text-sm leading-relaxed theme-bg-card border theme-border rounded-xl theme-text-primary focus:outline-none focus:ring-2 focus:ring-emerald-500/30 resize-y custom-scrollbar"
+                    className="font-mono text-sm leading-relaxed min-h-[420px]"
                     placeholder="Write documentation using GitHub Flavored Markdown..."
                   />
                 </div>
               ) : (
-                <div className="p-6 rounded-xl border theme-border theme-bg-card">
+                <div className="p-6 rounded-xl border border-border bg-card">
                   <div className="prose prose-zinc dark:prose-invert max-w-none">
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
                       {editedContent}
@@ -381,7 +389,7 @@ export const DocReader: React.FC<DocReaderProps> = ({
               )}
             </div>
           ) : (
-            <article className="prose-container">
+            <article className="prose prose-zinc dark:prose-invert max-w-none leading-relaxed text-sm md:text-base">
               <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
                 components={{
@@ -393,7 +401,7 @@ export const DocReader: React.FC<DocReaderProps> = ({
                     if (isInline) {
                       return (
                         <code
-                          className="px-1.5 py-0.5 rounded-md theme-bg-secondary text-emerald-600 dark:text-emerald-400 font-mono text-[13px] font-semibold border theme-border"
+                          className="bg-muted text-foreground px-1.5 py-0.5 rounded-md font-mono text-[13px] font-semibold border border-border"
                           {...props}
                         >
                           {children}
@@ -409,7 +417,7 @@ export const DocReader: React.FC<DocReaderProps> = ({
                     const text = String(children || "");
                     const id = slugify(text);
                     return (
-                      <h1 id={id} className="text-2xl md:text-3xl font-bold tracking-tight theme-text-primary mt-8 mb-4 border-b theme-border pb-2">
+                      <h1 id={id} className="text-2xl md:text-3xl font-extrabold tracking-tight text-foreground mt-8 mb-4 border-b border-border pb-2">
                         {children}
                       </h1>
                     );
@@ -418,9 +426,9 @@ export const DocReader: React.FC<DocReaderProps> = ({
                     const text = String(children || "");
                     const id = slugify(text);
                     return (
-                      <h2 id={id} className="group flex items-center gap-2 text-xl md:text-2xl font-bold tracking-tight theme-text-primary mt-8 mb-4 border-b theme-border pb-2 scroll-mt-6">
+                      <h2 id={id} className="group flex items-center gap-2 text-xl md:text-2xl font-bold tracking-tight text-foreground mt-8 mb-4 border-b border-border pb-2 scroll-mt-6">
                         <span>{children}</span>
-                        <a href={`#${id}`} className="opacity-0 group-hover:opacity-100 theme-text-muted hover:theme-accent text-sm font-mono transition-opacity">
+                        <a href={`#${id}`} className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-foreground text-sm font-mono transition-opacity">
                           #
                         </a>
                       </h2>
@@ -430,7 +438,7 @@ export const DocReader: React.FC<DocReaderProps> = ({
                     const text = String(children || "");
                     const id = slugify(text);
                     return (
-                      <h3 id={id} className="text-lg md:text-xl font-bold tracking-tight theme-text-primary mt-6 mb-3 scroll-mt-6">
+                      <h3 id={id} className="text-lg md:text-xl font-bold tracking-tight text-foreground mt-6 mb-3 scroll-mt-6">
                         {children}
                       </h3>
                     );
@@ -439,7 +447,7 @@ export const DocReader: React.FC<DocReaderProps> = ({
                   // 3. Paragraphs
                   p({ children }) {
                     return (
-                      <p className="text-sm md:text-base leading-relaxed theme-text-secondary mb-4">
+                      <p className="text-sm md:text-base leading-relaxed text-foreground/90 mb-4">
                         {children}
                       </p>
                     );
@@ -448,10 +456,10 @@ export const DocReader: React.FC<DocReaderProps> = ({
                   // 4. Blockquotes formatted as callout notes
                   blockquote({ children }) {
                     return (
-                      <blockquote className="my-5 p-4 rounded-xl border-l-4 border-emerald-500 theme-bg-card border theme-border theme-text-secondary text-sm leading-relaxed shadow-xs">
+                      <blockquote className="my-5 p-4 rounded-xl border-l-4 border-primary bg-muted/40 border border-border text-foreground/90 text-sm leading-relaxed shadow-xs">
                         <div className="flex items-start gap-2.5">
-                          <Info className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
-                          <div className="flex-1">{children}</div>
+                          <Info className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                          <div className="flex-1 not-italic">{children}</div>
                         </div>
                       </blockquote>
                     );
@@ -460,8 +468,8 @@ export const DocReader: React.FC<DocReaderProps> = ({
                   // 5. GFM Tables
                   table({ children }) {
                     return (
-                      <div className="my-6 overflow-x-auto rounded-xl border theme-border shadow-xs">
-                        <table className="w-full text-left text-xs md:text-sm theme-bg-card">
+                      <div className="my-6 overflow-x-auto rounded-xl border border-border shadow-xs">
+                        <table className="w-full text-left text-xs md:text-sm bg-card">
                           {children}
                         </table>
                       </div>
@@ -469,17 +477,17 @@ export const DocReader: React.FC<DocReaderProps> = ({
                   },
                   thead({ children }) {
                     return (
-                      <thead className="theme-bg-secondary border-b theme-border font-mono text-[11px] uppercase tracking-wider theme-text-muted">
+                      <thead className="bg-muted/60 border-b border-border font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
                         {children}
                       </thead>
                     );
                   },
                   th({ children }) {
-                    return <th className="px-4 py-3 font-semibold">{children}</th>;
+                    return <th className="px-4 py-3 font-semibold text-foreground">{children}</th>;
                   },
                   td({ children }) {
                     return (
-                      <td className="px-4 py-3 border-b theme-border last:border-0 theme-text-secondary">
+                      <td className="px-4 py-3 border-b border-border last:border-0 text-foreground/90">
                         {children}
                       </td>
                     );
@@ -487,10 +495,10 @@ export const DocReader: React.FC<DocReaderProps> = ({
 
                   // 6. Lists
                   ul({ children }) {
-                    return <ul className="list-disc pl-6 space-y-1.5 my-4 text-sm md:text-base theme-text-secondary">{children}</ul>;
+                    return <ul className="list-disc pl-6 space-y-1.5 my-4 text-sm md:text-base text-foreground/90">{children}</ul>;
                   },
                   ol({ children }) {
-                    return <ol className="list-decimal pl-6 space-y-1.5 my-4 text-sm md:text-base theme-text-secondary">{children}</ol>;
+                    return <ol className="list-decimal pl-6 space-y-1.5 my-4 text-sm md:text-base text-foreground/90">{children}</ol>;
                   },
                   li({ children }) {
                     return <li className="leading-relaxed">{children}</li>;
@@ -501,7 +509,7 @@ export const DocReader: React.FC<DocReaderProps> = ({
                     return (
                       <a
                         href={href}
-                        className="text-emerald-600 dark:text-emerald-400 font-medium hover:underline underline-offset-4 decoration-emerald-500/40 hover:decoration-emerald-500 transition-colors"
+                        className="text-primary font-medium hover:underline underline-offset-4 decoration-primary/40 hover:decoration-primary transition-colors"
                         target={href?.startsWith("http") ? "_blank" : undefined}
                         rel={href?.startsWith("http") ? "noreferrer" : undefined}
                       >
@@ -512,7 +520,7 @@ export const DocReader: React.FC<DocReaderProps> = ({
 
                   // 8. Horizontal Rules
                   hr() {
-                    return <hr className="my-8 border-t theme-border" />;
+                    return <hr className="my-8 border-t border-border" />;
                   },
                 }}
               >
@@ -521,53 +529,39 @@ export const DocReader: React.FC<DocReaderProps> = ({
             </article>
           )}
 
-          {/* 4. Bottom Navigation: "← Previous Page" & "Next Page →" Cards */}
+          {/* 4. Bottom Navigation: "← Previous Page" & "Next Page →" */}
           {!isEditing && (
-            <div className="mt-14 pt-8 border-t theme-border">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* Previous Page Card */}
-                {prevDoc ? (
-                  <button
-                    onClick={() => onNavigateDoc && onNavigateDoc(prevDoc.slug)}
-                    className="group flex flex-col items-start p-4 rounded-xl border theme-border theme-bg-card theme-bg-hover hover:border-emerald-500/40 transition-all cursor-pointer text-left shadow-xs"
-                    type="button"
-                  >
-                    <div className="flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400 font-medium mb-1.5 group-hover:theme-accent transition-colors">
-                      <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
-                      <span>Previous Page</span>
-                    </div>
-                    <span className="text-sm font-bold theme-text-primary group-hover:theme-accent transition-colors truncate w-full">
-                      {prevDoc.title}
-                    </span>
-                    <span className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">
-                      {prevDoc.category}
-                    </span>
-                  </button>
-                ) : (
-                  <div className="hidden sm:block" />
-                )}
+            <footer className="mt-16 pt-8 border-t border-border flex items-center justify-between gap-4">
+              {prevDoc ? (
+                <Button
+                  variant="outline"
+                  onClick={() => onNavigateDoc && onNavigateDoc(prevDoc.slug)}
+                  className="flex items-center space-x-2 h-auto py-2.5 px-4 text-left"
+                >
+                  <ChevronLeft className="h-4 w-4 shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-[10px] text-muted-foreground uppercase font-mono">Previous</p>
+                    <p className="text-xs font-semibold text-foreground truncate">{prevDoc.title}</p>
+                  </div>
+                </Button>
+              ) : (
+                <div />
+              )}
 
-                {/* Next Page Card */}
-                {nextDoc ? (
-                  <button
-                    onClick={() => onNavigateDoc && onNavigateDoc(nextDoc.slug)}
-                    className="group flex flex-col items-end p-4 rounded-xl border theme-border theme-bg-card theme-bg-hover hover:border-emerald-500/40 transition-all cursor-pointer text-right shadow-xs sm:col-start-2"
-                    type="button"
-                  >
-                    <div className="flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400 font-medium mb-1.5 group-hover:theme-accent transition-colors">
-                      <span>Next Page</span>
-                      <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-                    </div>
-                    <span className="text-sm font-bold theme-text-primary group-hover:theme-accent transition-colors truncate w-full">
-                      {nextDoc.title}
-                    </span>
-                    <span className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">
-                      {nextDoc.category}
-                    </span>
-                  </button>
-                ) : null}
-              </div>
-            </div>
+              {nextDoc ? (
+                <Button
+                  variant="outline"
+                  onClick={() => onNavigateDoc && onNavigateDoc(nextDoc.slug)}
+                  className="flex items-center space-x-2 h-auto py-2.5 px-4 text-right ml-auto"
+                >
+                  <div className="min-w-0">
+                    <p className="text-[10px] text-muted-foreground uppercase font-mono">Next</p>
+                    <p className="text-xs font-semibold text-foreground truncate">{nextDoc.title}</p>
+                  </div>
+                  <ChevronRight className="h-4 w-4 shrink-0" />
+                </Button>
+              ) : null}
+            </footer>
           )}
         </div>
       </div>

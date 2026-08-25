@@ -6,15 +6,14 @@ import {
   X,
   Search,
   BookOpen,
-  Terminal,
+  History,
   Sparkles,
   Plus,
-  Layers,
-  ArrowUpRight,
-  Database,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Project } from "@/lib/api";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 interface TopNavbarProps {
   activeProject: Project;
@@ -39,54 +38,55 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
   onOpenNewDocModal,
 }) => {
   return (
-    <header className="h-14 px-4 md:px-6 border-b theme-border theme-bg-secondary flex items-center justify-between shrink-0 z-20 select-none font-sans shadow-2xs">
+    <header className="h-14 px-4 md:px-6 border-b border-border bg-card flex items-center justify-between shrink-0 z-20 select-none font-sans shadow-2xs">
       {/* Left: Mobile Toggle & Project Branding */}
       <div className="flex items-center gap-3">
-        <button
+        <Button
+          variant="ghost"
+          size="icon"
           onClick={onToggleMobileMenu}
-          className="md:hidden p-2 rounded-lg theme-bg-card border theme-border theme-text-primary hover:theme-bg-hover transition-colors"
-          type="button"
+          className="md:hidden h-8 w-8"
           aria-label="Toggle Navigation Drawer"
         >
           {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
-        </button>
+        </Button>
 
         <div
           onClick={onNavigateHome}
           className="flex items-center gap-2 cursor-pointer group"
         >
-          <div className="flex items-center gap-2 font-black text-sm md:text-base tracking-tight theme-text-primary group-hover:theme-accent transition-colors">
+          <div className="flex items-center gap-2 font-black text-sm md:text-base tracking-tight text-foreground group-hover:text-primary transition-colors">
             <span className="text-lg">📖</span>
             <span className="font-extrabold tracking-tight">docsNlogs</span>
           </div>
-          <span className="text-zinc-400 font-mono text-xs hidden sm:inline">/</span>
-          <span className="text-xs font-bold theme-accent font-mono hidden sm:inline px-2 py-0.5 rounded-md theme-accent-bg border theme-accent-border">
+          <span className="text-muted-foreground font-mono text-xs hidden sm:inline">/</span>
+          <Badge variant="outline" className="hidden sm:inline-flex text-xs font-mono">
             {activeProject.name}
-          </span>
+          </Badge>
         </div>
       </div>
 
       {/* Center: Navigation Links (Desktop) */}
-      <nav className="hidden lg:flex items-center gap-1 text-xs font-semibold theme-text-secondary">
+      <nav className="hidden lg:flex items-center space-x-1 text-xs font-semibold text-muted-foreground">
         <button
           onClick={onNavigateHome}
-          className="px-3 py-1.5 rounded-lg theme-bg-hover hover:theme-text-primary transition-colors cursor-pointer flex items-center gap-1.5"
+          className="px-3 py-1.5 rounded-md hover:bg-muted hover:text-foreground transition-colors cursor-pointer flex items-center space-x-1.5"
           type="button"
         >
-          <BookOpen className="w-3.5 h-3.5 text-emerald-500" />
+          <BookOpen className="w-3.5 h-3.5" />
           <span>Documentation</span>
         </button>
         <button
           onClick={onNavigateLogs}
-          className="px-3 py-1.5 rounded-lg theme-bg-hover hover:theme-text-primary transition-colors cursor-pointer flex items-center gap-1.5"
+          className="px-3 py-1.5 rounded-md hover:bg-muted hover:text-foreground transition-colors cursor-pointer flex items-center space-x-1.5"
           type="button"
         >
-          <Terminal className="w-3.5 h-3.5 text-purple-500" />
+          <History className="w-3.5 h-3.5" />
           <span>Activity Logs</span>
         </button>
         <button
           onClick={onNavigateFeatures}
-          className="px-3 py-1.5 rounded-lg theme-bg-hover hover:theme-text-primary transition-colors cursor-pointer flex items-center gap-1.5"
+          className="px-3 py-1.5 rounded-md hover:bg-muted hover:text-foreground transition-colors cursor-pointer flex items-center space-x-1.5"
           type="button"
         >
           <Sparkles className="w-3.5 h-3.5 text-cyan-500" />
@@ -95,35 +95,35 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
       </nav>
 
       {/* Right: Search, Status, New Doc, Theme */}
-      <div className="flex items-center gap-2.5">
+      <div className="flex items-center gap-2">
         {/* Quick Search Button */}
         <button
           onClick={onOpenSearch}
-          className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg theme-bg-card hover:theme-bg-hover border theme-border text-xs text-zinc-500 dark:text-zinc-400 hover:theme-text-primary transition-all cursor-pointer shadow-xs"
+          className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted/60 hover:bg-muted border border-border text-xs text-muted-foreground hover:text-foreground transition-all cursor-pointer shadow-2xs"
           type="button"
         >
-          <Search className="w-3.5 h-3.5 theme-accent" />
+          <Search className="w-3.5 h-3.5" />
           <span>Search...</span>
-          <kbd className="px-1.5 py-0.2 rounded theme-bg-secondary text-[10px] font-mono border theme-border">
+          <kbd className="px-1.5 py-0.2 rounded bg-background text-[10px] font-mono border border-border">
             ⌘K
           </kbd>
         </button>
 
         {/* Database Health Badge */}
-        <div className="hidden xl:flex items-center gap-1.5 px-2.5 py-1 rounded-full theme-bg-card border theme-border text-[11px] font-mono theme-text-muted">
+        <div className="hidden xl:flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-border bg-muted/30 text-[11px] font-mono text-muted-foreground">
           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
           <span>D1 Edge Live</span>
         </div>
 
         {/* New Doc Action */}
-        <button
+        <Button
+          size="sm"
           onClick={onOpenNewDocModal}
-          className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg transition-all cursor-pointer shadow-xs active:scale-95"
-          type="button"
+          className="hidden sm:inline-flex h-8 px-3"
         >
-          <Plus className="w-3.5 h-3.5" />
+          <Plus className="w-3.5 h-3.5 mr-1" />
           <span>New Page</span>
-        </button>
+        </Button>
 
         {/* Theme Selector */}
         <ThemeToggle />

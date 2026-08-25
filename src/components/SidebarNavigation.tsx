@@ -7,19 +7,18 @@ import {
   FileText,
   ChevronRight,
   ChevronDown,
-  Layers,
-  Terminal,
+  BookOpen,
+  History,
+  Sparkles,
   Plus,
   Search,
-  BookOpen,
-  Sparkles,
-  CheckCircle2,
-  Clock,
   Compass,
-  GitBranch,
   X,
+  Database,
 } from "lucide-react";
 import { Project, DocItem, Feature } from "@/lib/api";
+import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export type ViewSelection =
   | { type: "project-overview"; projectSlug: string }
@@ -42,7 +41,7 @@ interface SidebarNavigationProps {
   onCloseMobileDrawer?: () => void;
 }
 
-// Hierarchical documentation sidebar organizing navigation into Getting Started, Categories, and Governance
+// Hierarchical documentation sidebar with project dropdown, categories, and governance links
 export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
   projects,
   activeProjectSlug,
@@ -63,7 +62,7 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
     Dashboard: true,
   });
 
-  // Toggles expand/collapse state for a given category folder
+  // Toggles folder expand/collapse state
   const toggleFolder = (folderKey: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     setExpandedFolders((prev) => ({
@@ -88,109 +87,105 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
   });
 
   return (
-    <aside className="w-72 md:w-80 h-full flex flex-col theme-bg-secondary border-r theme-border theme-text-secondary select-none font-sans">
+    <aside className="w-64 md:w-72 h-full flex flex-col bg-card border-r border-border text-foreground select-none font-sans">
       {/* 1. Top Project Switcher */}
-      <div className="p-3.5 border-b theme-border theme-bg-primary">
-        <div className="flex items-center justify-between mb-2">
+      <div className="p-4 border-b border-border">
+        <div className="flex items-center justify-between gap-2 mb-2.5">
           <div className="flex items-center gap-2">
-            <div className="p-1.5 rounded-lg theme-accent-bg theme-accent border theme-accent-border">
-              <Layers className="w-4 h-4" />
-            </div>
-            <div>
-              <span className="text-[11px] uppercase tracking-wider font-bold theme-text-muted font-mono">
-                Project Hub
-              </span>
-              <p className="text-[11px] theme-text-muted font-mono">{projects.length} Registered</p>
-            </div>
+            <span className="text-base">📖</span>
+            <span className="text-xs font-bold tracking-tight text-foreground uppercase font-mono">
+              docsNlogs
+            </span>
           </div>
 
           <div className="flex items-center gap-1">
-            <button
+            <Button
+              variant="outline"
+              size="sm"
               onClick={onOpenNewProjectModal}
-              className="flex items-center gap-1 px-2 py-1 text-xs font-semibold theme-bg-card theme-bg-hover theme-text-primary rounded-md border theme-border transition-all cursor-pointer shadow-xs"
+              className="h-7 px-2 text-[11px]"
               title="Onboard New Project"
-              type="button"
             >
-              <Plus className="w-3.5 h-3.5" />
+              <Plus className="w-3 h-3 mr-1" />
               <span>New</span>
-            </button>
+            </Button>
             {onCloseMobileDrawer && (
-              <button
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={onCloseMobileDrawer}
-                className="md:hidden p-1 rounded-md theme-bg-card theme-text-muted hover:theme-text-primary"
-                type="button"
+                className="md:hidden h-7 w-7"
               >
                 <X className="w-4 h-4" />
-              </button>
+              </Button>
             )}
           </div>
         </div>
 
-        {/* Project Selector Dropdown */}
+        {/* Project Selector */}
         <select
           value={activeProjectSlug}
           onChange={(e) => onSelectProject(e.target.value)}
-          className="w-full text-xs font-semibold theme-bg-secondary border theme-border rounded-lg px-2.5 py-1.5 theme-text-primary focus:outline-none cursor-pointer"
+          className="w-full text-xs font-medium bg-muted border border-border rounded-lg px-2.5 py-1.5 text-foreground focus:outline-none cursor-pointer"
         >
           {projects.map((p) => (
             <option key={p.slug} value={p.slug}>
-              📦 {p.name} ({p.slug})
+              {p.name} ({p.slug})
             </option>
           ))}
         </select>
       </div>
 
-      {/* 2. Quick Search Trigger */}
-      <div className="p-3 border-b theme-border">
+      {/* 2. Quick Search Button */}
+      <div className="p-3 border-b border-border">
         <button
           onClick={onOpenSearch}
-          className="w-full flex items-center justify-between px-3 py-2 text-xs rounded-lg theme-bg-primary border theme-border theme-text-muted hover:border-emerald-500/40 hover:theme-text-primary transition-all cursor-pointer shadow-xs"
+          className="w-full flex items-center justify-between px-3 py-1.5 text-xs rounded-lg bg-muted/60 border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-all cursor-pointer shadow-2xs"
           type="button"
         >
           <div className="flex items-center gap-2">
-            <Search className="w-3.5 h-3.5 theme-accent" />
+            <Search className="w-3.5 h-3.5 text-muted-foreground" />
             <span>Search docs & logs...</span>
           </div>
-          <kbd className="px-1.5 py-0.5 rounded theme-bg-secondary border theme-border text-[10px] font-mono text-zinc-400">
+          <kbd className="px-1.5 py-0.2 rounded bg-background border border-border text-[10px] font-mono text-muted-foreground">
             ⌘K
           </kbd>
         </button>
       </div>
 
-      {/* 3. Navigation Tree Sections */}
-      <div className="flex-1 overflow-y-auto px-3 py-4 space-y-6 custom-scrollbar text-xs">
-        {/* SECTION 1: GETTING STARTED */}
-        <div className="space-y-1">
-          <div className="px-2 pb-1 text-[10px] font-bold uppercase tracking-wider theme-text-muted font-mono">
+      {/* 3. Navigation Sections */}
+      <div className="flex-1 overflow-y-auto p-3 space-y-4 custom-scrollbar text-xs">
+        {/* SECTION 1: OVERVIEW */}
+        <div>
+          <p className="px-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
             Getting Started
-          </div>
+          </p>
 
           <button
             onClick={() => onSelect({ type: "project-overview", projectSlug: activeProjectSlug })}
-            className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg cursor-pointer transition-all ${
+            className={`w-full flex items-center justify-between px-3 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer ${
               currentSelection.type === "project-overview"
-                ? "theme-accent-bg theme-accent font-semibold border-l-2 theme-accent-border"
-                : "theme-bg-hover theme-text-secondary hover:theme-text-primary"
+                ? "bg-primary/10 text-primary font-semibold"
+                : "text-muted-foreground hover:bg-muted hover:text-foreground"
             }`}
             type="button"
           >
-            <div className="flex items-center gap-2 truncate">
-              <Compass className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-              <span className="truncate">Overview & Setup</span>
+            <div className="flex items-center space-x-2.5 truncate">
+              <Compass className="h-4 w-4 shrink-0" />
+              <span className="truncate">Project Overview</span>
             </div>
-            <span className="text-[10px] px-1.5 py-0.2 rounded theme-bg-secondary text-zinc-400 font-mono">
-              home
-            </span>
           </button>
         </div>
 
         {/* SECTION 2: DOCUMENTATION */}
-        <div className="space-y-1">
-          <div className="flex items-center justify-between px-2 pb-1 text-[10px] font-bold uppercase tracking-wider theme-text-muted font-mono">
-            <span>Documentation</span>
+        <div>
+          <div className="flex items-center justify-between px-3 mb-1.5">
+            <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+              Documentation
+            </p>
             <button
               onClick={() => onOpenNewDocModal()}
-              className="p-0.5 rounded theme-bg-hover text-zinc-400 hover:theme-text-primary"
+              className="p-0.5 rounded text-muted-foreground hover:text-foreground"
               title="Add New Document"
               type="button"
             >
@@ -198,152 +193,143 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
             </button>
           </div>
 
-          {categories.map((category) => {
-            const catDocs = docsByCategory[category] || [];
-            const isExpanded = expandedFolders[category] !== false;
-            const isFolderSelected =
-              currentSelection.type === "folder-overview" &&
-              currentSelection.category === category;
+          <div className="space-y-0.5">
+            {categories.map((category) => {
+              const catDocs = docsByCategory[category] || [];
+              const isExpanded = expandedFolders[category] !== false;
+              const isFolderSelected =
+                currentSelection.type === "folder-overview" &&
+                currentSelection.category === category;
 
-            return (
-              <div key={category} className="space-y-0.5">
-                {/* Category Header Row */}
-                <div
-                  onClick={() => onSelect({ type: "folder-overview", projectSlug: activeProjectSlug, category })}
-                  className={`group flex items-center justify-between px-2 py-1.5 rounded-lg cursor-pointer transition-all ${
-                    isFolderSelected
-                      ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 font-semibold"
-                      : "theme-bg-hover theme-text-secondary hover:theme-text-primary"
-                  }`}
-                >
-                  <div className="flex items-center gap-1.5 truncate">
-                    <button
-                      onClick={(e) => toggleFolder(category, e)}
-                      className="p-0.5 rounded text-zinc-400 hover:theme-text-primary"
-                      type="button"
-                    >
+              return (
+                <div key={category} className="space-y-0.5">
+                  {/* Category Header Row */}
+                  <div
+                    onClick={() => onSelect({ type: "folder-overview", projectSlug: activeProjectSlug, category })}
+                    className={`group flex items-center justify-between px-2.5 py-1.5 rounded-md text-sm cursor-pointer transition-colors ${
+                      isFolderSelected
+                        ? "bg-primary/10 text-primary font-medium"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    }`}
+                  >
+                    <div className="flex items-center space-x-2 truncate">
+                      <button
+                        onClick={(e) => toggleFolder(category, e)}
+                        className="p-0.5 rounded text-muted-foreground hover:text-foreground"
+                        type="button"
+                      >
+                        {isExpanded ? (
+                          <ChevronDown className="w-3.5 h-3.5" />
+                        ) : (
+                          <ChevronRight className="w-3.5 h-3.5" />
+                        )}
+                      </button>
                       {isExpanded ? (
-                        <ChevronDown className="w-3 h-3" />
+                        <FolderOpen className="w-4 h-4 text-amber-500 shrink-0" />
                       ) : (
-                        <ChevronRight className="w-3 h-3" />
+                        <Folder className="w-4 h-4 text-amber-500 shrink-0" />
                       )}
-                    </button>
-                    {isExpanded ? (
-                      <FolderOpen className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                    ) : (
-                      <Folder className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                    )}
-                    <span className="truncate font-medium">{category}</span>
-                  </div>
+                      <span className="truncate text-xs font-medium text-foreground">{category}</span>
+                    </div>
 
-                  <div className="flex items-center gap-1">
-                    <span className="text-[10px] text-zinc-400 font-mono group-hover:hidden">
+                    <span className="text-[10px] text-muted-foreground font-mono bg-muted/60 px-1.5 py-0.2 rounded">
                       {catDocs.length}
                     </span>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onOpenNewDocModal(category);
-                      }}
-                      className="hidden group-hover:flex p-0.5 rounded theme-bg-hover text-zinc-400 hover:theme-text-primary"
-                      title={`Add doc to ${category}`}
-                      type="button"
-                    >
-                      <Plus className="w-3 h-3" />
-                    </button>
                   </div>
+
+                  {/* Sub-documents */}
+                  {isExpanded && catDocs.length > 0 && (
+                    <div className="pl-6 space-y-0.5 my-0.5 border-l border-border ml-4">
+                      {catDocs.map((doc) => {
+                        const isDocSelected =
+                          currentSelection.type === "doc" &&
+                          currentSelection.docSlug === doc.slug;
+
+                        return (
+                          <button
+                            key={doc.id}
+                            onClick={() =>
+                              onSelect({
+                                type: "doc",
+                                projectSlug: activeProjectSlug,
+                                docSlug: doc.slug,
+                              })
+                            }
+                            className={`w-full flex items-center space-x-2 px-2.5 py-1 rounded-md text-xs transition-colors cursor-pointer text-left truncate ${
+                              isDocSelected
+                                ? "bg-primary/15 text-primary font-semibold"
+                                : "text-muted-foreground hover:bg-muted/70 hover:text-foreground"
+                            }`}
+                            type="button"
+                          >
+                            <FileText className="w-3 h-3 shrink-0 opacity-70" />
+                            <span className="truncate">{doc.title}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
-
-                {/* Sub-documents inside category */}
-                {isExpanded && catDocs.length > 0 && (
-                  <div className="pl-4 ml-3 border-l theme-border space-y-0.5 my-1">
-                    {catDocs.map((doc) => {
-                      const isDocSelected =
-                        currentSelection.type === "doc" &&
-                        currentSelection.docSlug === doc.slug;
-
-                      return (
-                        <button
-                          key={doc.id}
-                          onClick={() =>
-                            onSelect({
-                              type: "doc",
-                              projectSlug: activeProjectSlug,
-                              docSlug: doc.slug,
-                            })
-                          }
-                          className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md cursor-pointer text-left text-[11px] transition-all truncate ${
-                            isDocSelected
-                              ? "theme-accent-bg theme-accent font-semibold border-l-2 theme-accent-border"
-                              : "theme-text-muted hover:theme-text-primary theme-bg-hover"
-                          }`}
-                          type="button"
-                        >
-                          <FileText className="w-3 h-3 shrink-0 opacity-70" />
-                          <span className="truncate">{doc.title}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
 
         {/* SECTION 3: LOGS & GOVERNANCE */}
-        <div className="space-y-1">
-          <div className="px-2 pb-1 text-[10px] font-bold uppercase tracking-wider theme-text-muted font-mono">
+        <div>
+          <p className="px-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
             Logs & Governance
+          </p>
+
+          <div className="space-y-0.5">
+            {/* Live Activity Logs */}
+            <button
+              onClick={() => onSelect({ type: "logs", projectSlug: activeProjectSlug })}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer ${
+                currentSelection.type === "logs" && !currentSelection.featureKey
+                  ? "bg-primary/10 text-primary font-semibold"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+              }`}
+              type="button"
+            >
+              <div className="flex items-center space-x-2.5 truncate">
+                <History className="h-4 w-4 shrink-0" />
+                <span className="truncate text-xs">Live Activity Logs</span>
+              </div>
+              <span className="text-[10px] text-muted-foreground font-mono bg-muted/60 px-1.5 py-0.2 rounded">
+                {features.length > 0 ? "live" : "logs"}
+              </span>
+            </button>
+
+            {/* Features & Epics Roadmap */}
+            <button
+              onClick={() => onSelect({ type: "features", projectSlug: activeProjectSlug })}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer ${
+                currentSelection.type === "features"
+                  ? "bg-primary/10 text-primary font-semibold"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+              }`}
+              type="button"
+            >
+              <div className="flex items-center space-x-2.5 truncate">
+                <Sparkles className="h-4 w-4 text-cyan-500 shrink-0" />
+                <span className="truncate text-xs">Features & Epics</span>
+              </div>
+              <span className="text-[10px] text-muted-foreground font-mono bg-muted/60 px-1.5 py-0.2 rounded">
+                {features.length}
+              </span>
+            </button>
           </div>
-
-          {/* Live Activity Logs */}
-          <button
-            onClick={() => onSelect({ type: "logs", projectSlug: activeProjectSlug })}
-            className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg cursor-pointer transition-all ${
-              currentSelection.type === "logs" && !currentSelection.featureKey
-                ? "bg-purple-500/10 text-purple-600 dark:text-purple-400 font-semibold border-l-2 border-purple-500"
-                : "theme-bg-hover theme-text-secondary hover:theme-text-primary"
-            }`}
-            type="button"
-          >
-            <div className="flex items-center gap-2 truncate">
-              <Terminal className="w-3.5 h-3.5 text-purple-500 shrink-0" />
-              <span className="truncate">Live Activity Logs</span>
-            </div>
-            <span className="text-[10px] px-1.5 py-0.2 rounded bg-purple-500/10 text-purple-500 font-mono">
-              changelog
-            </span>
-          </button>
-
-          {/* Features & Epics Roadmap */}
-          <button
-            onClick={() => onSelect({ type: "features", projectSlug: activeProjectSlug })}
-            className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg cursor-pointer transition-all ${
-              currentSelection.type === "features"
-                ? "bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 font-semibold border-l-2 border-cyan-500"
-                : "theme-bg-hover theme-text-secondary hover:theme-text-primary"
-            }`}
-            type="button"
-          >
-            <div className="flex items-center gap-2 truncate">
-              <Sparkles className="w-3.5 h-3.5 text-cyan-500 shrink-0" />
-              <span className="truncate">Features & Epics</span>
-            </div>
-            <span className="text-[10px] px-1.5 py-0.2 rounded theme-bg-secondary text-zinc-400 font-mono">
-              {features.length}
-            </span>
-          </button>
         </div>
       </div>
 
-      {/* 4. Bottom Footer */}
-      <div className="p-3.5 border-t theme-border theme-bg-primary text-[11px] theme-text-muted flex items-center justify-between font-mono">
-        <div className="flex items-center gap-1.5">
+      {/* 4. Footer */}
+      <div className="p-3.5 border-t border-border flex items-center justify-between text-xs text-muted-foreground">
+        <div className="flex items-center gap-1.5 font-mono text-[11px]">
           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span>Cloudflare D1 Live</span>
+          <span>Cloudflare D1</span>
         </div>
-        <span className="text-zinc-500">v0.1.0</span>
+        <ThemeToggle />
       </div>
     </aside>
   );

@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { format } from 'date-fns';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import {
   GitCommit,
   Copy,
@@ -38,6 +40,67 @@ interface LogsPageProps {
   projectSlug: string;
 }
 
+interface FileChipProps {
+  path: string;
+  compact?: boolean;
+}
+
+/**
+ * Code-editor style chip for modified files:
+ * - Directory path is shown in subtle muted gray
+ * - File name is highlighted in golden / amber color
+ * - Click to copy full file path
+ */
+const FileChip: React.FC<FileChipProps> = ({ path, compact = false }) => {
+  const [copied, setCopied] = useState(false);
+  const normalized = path.replace(/\\/g, '/').trim();
+  const lastSlashIndex = normalized.lastIndexOf('/');
+  const directory = lastSlashIndex !== -1 ? normalized.slice(0, lastSlashIndex + 1) : '';
+  const fileName = lastSlashIndex !== -1 ? normalized.slice(lastSlashIndex + 1) : normalized;
+
+  const handleCopy = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigator.clipboard.writeText(normalized);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
+
+  return (
+    <div
+      onClick={handleCopy}
+      title={`Click to copy: ${normalized}`}
+      className={cn(
+        "group/file inline-flex items-center gap-1.5 rounded-md font-mono transition-all duration-150 cursor-pointer select-none",
+        "bg-zinc-900/90 dark:bg-zinc-950/90 hover:bg-zinc-800/90 dark:hover:bg-zinc-900 border border-zinc-700/60 dark:border-zinc-800 hover:border-amber-500/50 shadow-xs",
+        compact ? "px-2 py-0.5 text-[11px]" : "px-2.5 py-1 text-xs"
+      )}
+    >
+      <FileCode className={cn("text-amber-400/90 shrink-0 group-hover/file:text-amber-300 transition-colors", compact ? "w-3 h-3" : "w-3.5 h-3.5")} />
+      
+      {directory && (
+        <span className={cn(
+          "text-zinc-400 dark:text-zinc-400 font-normal transition-colors group-hover/file:text-zinc-300",
+          compact ? "truncate max-w-[130px]" : "truncate max-w-[220px] sm:max-w-none"
+        )}>
+          {directory}
+        </span>
+      )}
+      
+      <span className="text-amber-400 dark:text-amber-300 font-semibold tracking-wide group-hover/file:text-amber-300 group-hover/file:underline decoration-amber-400/40 underline-offset-2 transition-colors">
+        {fileName}
+      </span>
+
+      <span className="opacity-0 group-hover/file:opacity-100 ml-0.5 text-zinc-400 transition-opacity shrink-0">
+        {copied ? (
+          <Check className="w-3 h-3 text-emerald-400" />
+        ) : (
+          <Copy className="w-3 h-3 hover:text-amber-300" />
+        )}
+      </span>
+    </div>
+  );
+};
+
 export const LogsPage: React.FC<LogsPageProps> = ({ projectSlug }) => {
   const [logs, setLogs] = useState<Log[]>([]);
   const [loading, setLoading] = useState(true);
@@ -53,6 +116,64 @@ export const LogsPage: React.FC<LogsPageProps> = ({ projectSlug }) => {
     if (!raw) return '';
     const trimmed = raw.trim();
     return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+  };
+
+  const cleanPromptText = (text: string) => {
+    if (!text) return '';
+    let cleaned = text.trim();
+    if (
+      (cleaned.startsWith('"') && cleaned.endsWith('"')) ||
+      (cleaned.startsWith("'") && cleaned.endsWith("'")) ||
+      (cleaned.startsWith('`') && cleaned.endsWith('`'))
+    ) {
+      cleaned = cleaned.slice(1, -1).trim();
+    }
+    return cleaned;
+  };
+
+  const renderAiPrompt = (rawPrompt: string) => {
+    const cleaned = cleanPromptText(rawPrompt);
+    if (!cleaned) return null;
+
+    return (
+      <div className="p-3.5 bg-zinc-950/95 dark:bg-zinc-950 rounded-lg border border-zinc-800 text-xs text-zinc-200 leading-relaxed overflow-x-auto not-italic shadow-inner font-sans">
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm]}
+          components={{
+            p: ({ children }) => (
+              <p className="mb-2 last:mb-0 text-zinc-200 leading-relaxed font-sans text-xs not-italic">
+                {children}
+              </p>
+            ),
+            ul: ({ children }) => (
+              <ul className="list-disc list-inside space-y-1.5 my-1.5 text-zinc-200 font-sans text-xs not-italic">
+                {children}
+              </ul>
+            ),
+            ol: ({ children }) => (
+              <ol className="list-decimal list-inside space-y-1.5 my-1.5 text-zinc-200 font-sans text-xs not-italic">
+                {children}
+              </ol>
+            ),
+            li: ({ children }) => (
+              <li className="text-zinc-200 text-xs not-italic leading-relaxed">
+                {children}
+              </li>
+            ),
+            strong: ({ children }) => (
+              <strong className="text-amber-300 font-semibold not-italic">{children}</strong>
+            ),
+            code: ({ node, inline, className, children, ...props }: any) => (
+              <code className="bg-zinc-800 text-amber-300 px-1.5 py-0.5 rounded text-[11px] font-mono border border-zinc-700/60 font-medium not-italic" {...props}>
+                {children}
+              </code>
+            ),
+          }}
+        >
+          {cleaned}
+        </ReactMarkdown>
+      </div>
+    );
   };
 
   useEffect(() => {
@@ -306,36 +427,57 @@ export const LogsPage: React.FC<LogsPageProps> = ({ projectSlug }) => {
                       </h3>
 
                       {files.length > 0 && (
-                        <div className="space-y-1">
-                          <p className="text-[10px] uppercase font-bold text-muted-foreground">Modified Files ({files.length}):</p>
-                          <div className="flex flex-wrap gap-1">
+                        <div className="space-y-1.5">
+                          <p className="text-[10px] uppercase font-bold text-muted-foreground flex items-center gap-1">
+                            <FileCode className="w-3 h-3 text-amber-400" />
+                            Modified Files ({files.length}):
+                          </p>
+                          <div className="flex flex-wrap gap-1.5">
                             {files.slice(0, 4).map(file => (
-                              <span key={file} className="text-[10px] font-mono bg-muted/70 text-muted-foreground px-1.5 py-0.5 rounded border border-border/40 truncate max-w-[200px]">
-                                {file}
-                              </span>
+                              <FileChip key={file} path={file} compact />
                             ))}
                             {files.length > 4 && (
-                              <span className="text-[10px] text-muted-foreground">+{files.length - 4} more</span>
+                              <span className="text-[10px] text-muted-foreground self-center px-1 font-mono">
+                                +{files.length - 4} more
+                              </span>
                             )}
                           </div>
                         </div>
                       )}
 
                       {prompt && (
-                        <div className="pt-2 border-t border-border/40">
-                          <button
-                            className="flex items-center justify-between w-full text-left focus:outline-none cursor-pointer group/prompt"
-                            onClick={() => togglePrompt(log.id)}
-                          >
-                            <span className="text-[11px] font-medium text-muted-foreground group-hover/prompt:text-foreground transition">AI Prompt</span>
-                            <span className="text-[10px] text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
-                              {expandedPrompt === log.id ? 'Hide' : 'View'}
-                            </span>
-                          </button>
+                        <div className="pt-2 border-t border-border/40 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <button
+                              className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground hover:text-foreground transition cursor-pointer"
+                              onClick={() => togglePrompt(log.id)}
+                            >
+                              <Sparkles className="w-3 h-3 text-primary" />
+                              <span>AI Prompt Details</span>
+                            </button>
+                            <div className="flex items-center gap-1.5">
+                              {expandedPrompt === log.id && (
+                                <button
+                                  onClick={() => handleCopy(cleanPromptText(prompt), `prompt-${log.id}`)}
+                                  className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground px-1.5 py-0.5 rounded bg-muted/60 hover:bg-muted transition cursor-pointer border border-border/40"
+                                  title="Copy prompt"
+                                >
+                                  {copiedId === `prompt-${log.id}` ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
+                                </button>
+                              )}
+                              <button
+                                onClick={() => togglePrompt(log.id)}
+                                className="text-[10px] text-muted-foreground bg-muted hover:bg-muted/80 px-2 py-0.5 rounded-full cursor-pointer"
+                              >
+                                {expandedPrompt === log.id ? 'Hide' : 'View'}
+                              </button>
+                            </div>
+                          </div>
+
                           {expandedPrompt === log.id && (
-                            <p className="mt-2 text-xs text-foreground/80 bg-muted/40 p-2.5 rounded-lg italic border border-border/40">
-                              "{prompt}"
-                            </p>
+                            <div className="mt-1">
+                              {renderAiPrompt(prompt)}
+                            </div>
                           )}
                         </div>
                       )}
@@ -400,36 +542,57 @@ export const LogsPage: React.FC<LogsPageProps> = ({ projectSlug }) => {
                       </h3>
 
                       {files.length > 0 && (
-                        <div className="space-y-1">
-                          <p className="text-[10px] uppercase font-bold text-muted-foreground">Files ({files.length}):</p>
-                          <div className="flex flex-wrap gap-1">
+                        <div className="space-y-1.5">
+                          <p className="text-[10px] uppercase font-bold text-muted-foreground flex items-center gap-1">
+                            <FileCode className="w-3 h-3 text-amber-400" />
+                            Files ({files.length}):
+                          </p>
+                          <div className="flex flex-wrap gap-1.5">
                             {files.slice(0, 3).map(file => (
-                              <span key={file} className="text-[10px] font-mono bg-muted/70 text-muted-foreground px-1.5 py-0.5 rounded border border-border/40 truncate max-w-[180px]">
-                                {file}
-                              </span>
+                              <FileChip key={file} path={file} compact />
                             ))}
                             {files.length > 3 && (
-                              <span className="text-[10px] text-muted-foreground">+{files.length - 3}</span>
+                              <span className="text-[10px] text-muted-foreground self-center px-1 font-mono">
+                                +{files.length - 3}
+                              </span>
                             )}
                           </div>
                         </div>
                       )}
 
                       {prompt && (
-                        <div className="pt-2 border-t border-border/40">
-                          <button
-                            className="flex items-center justify-between w-full text-left focus:outline-none cursor-pointer group/prompt"
-                            onClick={() => togglePrompt(log.id)}
-                          >
-                            <span className="text-[11px] font-medium text-muted-foreground group-hover/prompt:text-foreground transition">AI Prompt</span>
-                            <span className="text-[10px] text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
-                              {expandedPrompt === log.id ? 'Hide' : 'View'}
-                            </span>
-                          </button>
+                        <div className="pt-2 border-t border-border/40 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <button
+                              className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground hover:text-foreground transition cursor-pointer"
+                              onClick={() => togglePrompt(log.id)}
+                            >
+                              <Sparkles className="w-3 h-3 text-primary" />
+                              <span>AI Prompt Details</span>
+                            </button>
+                            <div className="flex items-center gap-1.5">
+                              {expandedPrompt === log.id && (
+                                <button
+                                  onClick={() => handleCopy(cleanPromptText(prompt), `prompt-${log.id}`)}
+                                  className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground px-1.5 py-0.5 rounded bg-muted/60 hover:bg-muted transition cursor-pointer border border-border/40"
+                                  title="Copy prompt"
+                                >
+                                  {copiedId === `prompt-${log.id}` ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
+                                </button>
+                              )}
+                              <button
+                                onClick={() => togglePrompt(log.id)}
+                                className="text-[10px] text-muted-foreground bg-muted hover:bg-muted/80 px-2 py-0.5 rounded-full cursor-pointer"
+                              >
+                                {expandedPrompt === log.id ? 'Hide' : 'View'}
+                              </button>
+                            </div>
+                          </div>
+
                           {expandedPrompt === log.id && (
-                            <p className="mt-2 text-xs text-foreground/80 bg-muted/40 p-2.5 rounded-lg italic border border-border/40">
-                              "{prompt}"
-                            </p>
+                            <div className="mt-1">
+                              {renderAiPrompt(prompt)}
+                            </div>
                           )}
                         </div>
                       )}
@@ -536,19 +699,14 @@ export const LogsPage: React.FC<LogsPageProps> = ({ projectSlug }) => {
 
                         {/* Modified Files */}
                         {files.length > 0 && (
-                          <div className="space-y-1.5">
-                            <p className="text-[11px] font-bold uppercase text-muted-foreground flex items-center gap-1">
-                              <FileCode className="w-3.5 h-3.5 text-primary" />
+                          <div className="space-y-2">
+                            <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                              <FileCode className="w-3.5 h-3.5 text-amber-400" />
                               Modified Files ({files.length}):
                             </p>
-                            <div className="flex flex-wrap gap-1.5">
+                            <div className="flex flex-wrap gap-2">
                               {files.map(file => (
-                                <span
-                                  key={file}
-                                  className="text-xs font-mono bg-muted text-foreground px-2 py-0.5 rounded border border-border/50"
-                                >
-                                  {file}
-                                </span>
+                                <FileChip key={file} path={file} />
                               ))}
                             </div>
                           </div>
@@ -556,11 +714,34 @@ export const LogsPage: React.FC<LogsPageProps> = ({ projectSlug }) => {
 
                         {/* AI Prompt Used */}
                         {prompt && (
-                          <div className="space-y-1">
-                            <p className="text-[11px] font-bold uppercase text-muted-foreground">AI Prompt Used:</p>
-                            <div className="p-3 bg-card rounded-lg border border-border/60 text-xs italic text-foreground/90 font-mono leading-relaxed">
-                              "{prompt}"
+                          <div className="space-y-1.5 pt-1">
+                            <div className="flex items-center justify-between">
+                              <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                                <Sparkles className="w-3.5 h-3.5 text-primary" />
+                                AI Action & Prompt Details:
+                              </p>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleCopy(cleanPromptText(prompt), `prompt-${log.id}`);
+                                }}
+                                className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground px-2 py-0.5 rounded bg-muted/60 hover:bg-muted transition cursor-pointer border border-border/40"
+                                title="Copy AI Prompt"
+                              >
+                                {copiedId === `prompt-${log.id}` ? (
+                                  <>
+                                    <Check className="w-3 h-3 text-emerald-500" />
+                                    <span className="text-emerald-500 font-medium">Copied</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Copy className="w-3 h-3 text-muted-foreground" />
+                                    <span>Copy Prompt</span>
+                                  </>
+                                )}
+                              </button>
                             </div>
+                            {renderAiPrompt(prompt)}
                           </div>
                         )}
 

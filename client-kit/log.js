@@ -232,6 +232,9 @@ const main = async () => {
   let scope = flags.scope || (parsed ? parsed.scope : detectScopeFromFiles(changedFiles));
   let action = flags.type || flags.action || (parsed ? parsed.type : "feat");
   let summary = parsed ? parsed.description : rawMessage;
+  if (summary) {
+    summary = summary.charAt(0).toUpperCase() + summary.slice(1);
+  }
   let logId = flags.id ? String(flags.id).toUpperCase() : (parsed ? parsed.logId : null);
   const commitId = flags.commit || flags.c || getGitCommitHash();
   const promptUsed = flags.prompt || flags.p || "";

@@ -86,12 +86,19 @@ logRouter.get("/", async (req: Request, res: Response) => {
     sql += ` ORDER BY created_at DESC LIMIT ${maxLimit}`;
 
     const logs = await queryD1(sql, params);
-    const formatted = logs.map((l: any) => ({
-      ...l,
-      changedFiles: JSON.parse(l.changed_files || "[]"),
-    }));
+    const formatted = logs.map((l: any) => {
+      const files = JSON.parse(l.changed_files || "[]");
+      return {
+        ...l,
+        commitHash: l.commit_id || "",
+        modifiedFiles: files,
+        changedFiles: files,
+        promptUsed: l.prompt_used || "",
+        timestamp: l.created_at,
+      };
+    });
 
-    res.json({ success: true, count: formatted.length, logs: formatted });
+    res.json(formatted);
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
   }
@@ -114,6 +121,9 @@ logRouter.post("/", async (req: Request, res: Response) => {
     let finalScope = scope || (parsed ? parsed.scope : "frontend");
     let finalAction = action || (parsed ? parsed.type : "feat");
     let finalSummary = parsed ? parsed.description : rawMessage;
+    if (finalSummary) {
+      finalSummary = finalSummary.charAt(0).toUpperCase() + finalSummary.slice(1);
+    }
 
     // If no LogID provided, calculate next sequential ID based on scope (e.g. AB01, AD01, AA01)
     const prefix = getScopePrefix(finalScope);

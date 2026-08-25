@@ -23,10 +23,12 @@ docRouter.get("/", async (req: Request, res: Response) => {
     const docs = await queryD1(sql, params);
     const formatted = docs.map((d: any) => ({
       ...d,
+      author: d.last_edited_by || "AI Assistant",
+      lastUpdated: d.updated_at || d.created_at,
       tags: JSON.parse(d.tags || "[]"),
     }));
 
-    res.json({ success: true, docs: formatted });
+    res.json(formatted);
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
   }
@@ -77,8 +79,10 @@ docRouter.get("/:docId", async (req: Request, res: Response) => {
 
     const d = docs[0];
     res.json({
-      success: true,
-      doc: { ...d, tags: JSON.parse(d.tags || "[]") },
+      ...d,
+      author: d.last_edited_by || "AI Assistant",
+      lastUpdated: d.updated_at || d.created_at,
+      tags: JSON.parse(d.tags || "[]"),
     });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });

@@ -15,7 +15,7 @@ import {
   Compass,
   X,
   Lock,
-  Unlock,
+  LayoutDashboard,
 } from "lucide-react";
 import { Project, DocItem, Feature } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
@@ -43,7 +43,7 @@ interface SidebarNavigationProps {
   onCloseMobileDrawer?: () => void;
 }
 
-// Hierarchical documentation sidebar with project dropdown, categories, and governance links
+// Hierarchical documentation sidebar providing clean public docs navigation or full developer management controls
 export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
   projects,
   activeProjectSlug,
@@ -57,7 +57,7 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
   onOpenSearch,
   onCloseMobileDrawer,
 }) => {
-  const { isUnlocked, requireAuth, openAuthModal } = useAuth();
+  const { isUnlocked, openAuthModal } = useAuth();
   const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({
     Architecture: true,
     Backend: true,
@@ -102,16 +102,18 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
           </div>
 
           <div className="flex items-center gap-1">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => requireAuth(onOpenNewProjectModal)}
-              className="h-7 px-2 text-[11px]"
-              title="Onboard New Project (Requires Passkey)"
-            >
-              <Plus className="w-3 h-3 mr-1" />
-              <span>New</span>
-            </Button>
+            {isUnlocked && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onOpenNewProjectModal}
+                className="h-7 px-2 text-[11px]"
+                title="Onboard New Project"
+              >
+                <Plus className="w-3 h-3 mr-1" />
+                <span>New</span>
+              </Button>
+            )}
             {onCloseMobileDrawer && (
               <Button
                 variant="ghost"
@@ -148,7 +150,7 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
         >
           <div className="flex items-center gap-2">
             <Search className="w-3.5 h-3.5 text-muted-foreground" />
-            <span>Search docs & logs...</span>
+            <span>Search docs...</span>
           </div>
           <kbd className="px-1.5 py-0.2 rounded bg-background border border-border text-[10px] font-mono text-muted-foreground">
             ⌘K
@@ -158,42 +160,66 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
 
       {/* 3. Navigation Sections */}
       <div className="flex-1 overflow-y-auto p-3 space-y-4 custom-scrollbar text-xs">
-        {/* SECTION 1: OVERVIEW */}
-        <div>
-          <p className="px-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
-            Getting Started
-          </p>
+        {/* DEVELOPER DASHBOARD SECTION (Only visible when unlocked) */}
+        {isUnlocked && (
+          <div>
+            <p className="px-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
+              Management
+            </p>
 
-          <button
-            onClick={() => onSelect({ type: "project-overview", projectSlug: activeProjectSlug })}
-            className={`w-full flex items-center justify-between px-3 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer ${
-              currentSelection.type === "project-overview"
-                ? "bg-primary/10 text-primary font-semibold"
-                : "text-muted-foreground hover:bg-muted hover:text-foreground"
-            }`}
-            type="button"
-          >
-            <div className="flex items-center space-x-2.5 truncate">
-              <Compass className="h-4 w-4 shrink-0" />
-              <span className="truncate">Project Overview</span>
+            <div className="space-y-0.5">
+              <button
+                onClick={() => onSelect({ type: "project-overview", projectSlug: activeProjectSlug })}
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer ${
+                  currentSelection.type === "project-overview"
+                    ? "bg-primary/10 text-primary font-semibold"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                }`}
+                type="button"
+              >
+                <div className="flex items-center space-x-2.5 truncate">
+                  <LayoutDashboard className="h-4 w-4 shrink-0 text-primary" />
+                  <span className="truncate">Management Dashboard</span>
+                </div>
+              </button>
+
+              <button
+                onClick={() => onSelect({ type: "features", projectSlug: activeProjectSlug })}
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer ${
+                  currentSelection.type === "features"
+                    ? "bg-primary/10 text-primary font-semibold"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                }`}
+                type="button"
+              >
+                <div className="flex items-center space-x-2.5 truncate">
+                  <Sparkles className="h-4 w-4 text-cyan-500 shrink-0" />
+                  <span className="truncate text-xs">Features &amp; Epics</span>
+                </div>
+                <span className="text-[10px] text-muted-foreground font-mono bg-muted/60 px-1.5 py-0.2 rounded">
+                  {features.length}
+                </span>
+              </button>
             </div>
-          </button>
-        </div>
+          </div>
+        )}
 
-        {/* SECTION 2: DOCUMENTATION */}
+        {/* DOCUMENTATION TREE (Always visible for public reading) */}
         <div>
           <div className="flex items-center justify-between px-3 mb-1.5">
             <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
               Documentation
             </p>
-            <button
-              onClick={() => requireAuth(() => onOpenNewDocModal())}
-              className="p-0.5 rounded text-muted-foreground hover:text-foreground cursor-pointer"
-              title="Add New Document (Requires Passkey)"
-              type="button"
-            >
-              <Plus className="w-3 h-3" />
-            </button>
+            {isUnlocked && (
+              <button
+                onClick={() => onOpenNewDocModal()}
+                className="p-0.5 rounded text-muted-foreground hover:text-foreground cursor-pointer"
+                title="Add New Document"
+                type="button"
+              >
+                <Plus className="w-3 h-3" />
+              </button>
+            )}
           </div>
 
           <div className="space-y-0.5">
@@ -278,10 +304,10 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
           </div>
         </div>
 
-        {/* SECTION 3: LOGS & GOVERNANCE */}
+        {/* LOGS & GOVERNANCE */}
         <div>
           <p className="px-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
-            Logs & Governance
+            Changelog &amp; Logs
           </p>
 
           <div className="space-y-0.5">
@@ -297,30 +323,8 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
             >
               <div className="flex items-center space-x-2.5 truncate">
                 <History className="h-4 w-4 shrink-0" />
-                <span className="truncate text-xs">Live Activity Logs</span>
+                <span className="truncate text-xs">Activity Changelog</span>
               </div>
-              <span className="text-[10px] text-muted-foreground font-mono bg-muted/60 px-1.5 py-0.2 rounded">
-                {features.length > 0 ? "live" : "logs"}
-              </span>
-            </button>
-
-            {/* Features & Epics Roadmap */}
-            <button
-              onClick={() => onSelect({ type: "features", projectSlug: activeProjectSlug })}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer ${
-                currentSelection.type === "features"
-                  ? "bg-primary/10 text-primary font-semibold"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
-              }`}
-              type="button"
-            >
-              <div className="flex items-center space-x-2.5 truncate">
-                <Sparkles className="h-4 w-4 text-cyan-500 shrink-0" />
-                <span className="truncate text-xs">Features & Epics</span>
-              </div>
-              <span className="text-[10px] text-muted-foreground font-mono bg-muted/60 px-1.5 py-0.2 rounded">
-                {features.length}
-              </span>
             </button>
           </div>
         </div>
@@ -328,10 +332,21 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
 
       {/* 4. Footer */}
       <div className="p-3.5 border-t border-border flex items-center justify-between text-xs text-muted-foreground">
-        <div className="flex items-center gap-1.5 font-mono text-[11px]">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span>Cloudflare D1</span>
-        </div>
+        {!isUnlocked ? (
+          <button
+            onClick={() => openAuthModal(() => onSelect({ type: "project-overview", projectSlug: activeProjectSlug }))}
+            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer font-mono"
+            type="button"
+          >
+            <Lock className="w-3.5 h-3.5 text-amber-500" />
+            <span>Dashboard 🔒</span>
+          </button>
+        ) : (
+          <div className="flex items-center gap-1.5 font-mono text-[11px] text-emerald-500 font-semibold">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span>Dashboard Unlocked</span>
+          </div>
+        )}
         <ThemeToggle />
       </div>
     </aside>

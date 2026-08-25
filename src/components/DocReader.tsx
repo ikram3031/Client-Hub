@@ -315,24 +315,28 @@ export const DocReader: React.FC<DocReaderProps> = ({
                       <Share2 className="w-3.5 h-3.5 text-muted-foreground" />
                     )}
                   </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => requireAuth(() => setIsEditing(true))}
-                    title={isUnlocked ? "Edit Document" : "Authenticate to Edit"}
-                  >
-                    <Edit3 className="w-3.5 h-3.5 mr-1 text-primary" />
-                    <span>Edit</span>
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => requireAuth(handleDeleteDoc)}
-                    className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-                    title={isUnlocked ? "Delete Document" : "Authenticate to Delete"}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
+                  {isUnlocked && (
+                    <>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setIsEditing(true)}
+                        title="Edit Document"
+                      >
+                        <Edit3 className="w-3.5 h-3.5 mr-1 text-primary" />
+                        <span>Edit</span>
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={handleDeleteDoc}
+                        className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                        title="Delete Document"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </>
+                  )}
                 </>
               )}
             </div>
@@ -574,7 +578,7 @@ export const DocReader: React.FC<DocReaderProps> = ({
       {!isEditing && (
         <TableOfContents
           content={doc.content}
-          onEditClick={() => requireAuth(() => setIsEditing(true))}
+          onEditClick={isUnlocked ? () => setIsEditing(true) : undefined}
         />
       )}
     </div>

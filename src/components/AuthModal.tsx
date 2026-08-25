@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { KeyRound, ShieldAlert, Check, X, Lock, Eye, EyeOff, Terminal, ShieldCheck } from "lucide-react";
+import { KeyRound, ShieldAlert, X, Lock, Eye, EyeOff, Terminal, ShieldCheck } from "lucide-react";
 import { useAuth, generateRandomHex } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,15 +12,22 @@ export const AuthModal: React.FC = () => {
   const { isAuthModalOpen, closeAuthModal, unlock } = useAuth();
   const [passkey, setPasskey] = useState<string>("");
   const [hexCode, setHexCode] = useState<string>("");
+  const [questionText, setQuestionText] = useState<string>("");
   const [error, setError] = useState<string>("");
   const [isSuccess, setIsSuccess] = useState<boolean>(false);
   const [showPasskey, setShowPasskey] = useState<boolean>(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Generates a fresh random hex code challenge every time the modal is opened
+  // Generates a dynamic random hex question challenge whenever modal opens
+  const generateNewChallenge = () => {
+    const hex = generateRandomHex(8);
+    setHexCode(hex);
+    setQuestionText(`Authorization Challenge [${hex}]: What is the developer passkey to unlock the Management Dashboard?`);
+  };
+
   useEffect(() => {
     if (isAuthModalOpen) {
-      setHexCode(generateRandomHex(8));
+      generateNewChallenge();
       setPasskey("");
       setError("");
       setIsSuccess(false);
@@ -53,7 +60,8 @@ export const AuthModal: React.FC = () => {
       setError("");
     } else {
       setError("Access Denied: Invalid security passkey. Please try again.");
-      setHexCode(generateRandomHex(8));
+      generateNewChallenge();
+      setPasskey("");
     }
   };
 
@@ -78,7 +86,7 @@ export const AuthModal: React.FC = () => {
             </Badge>
             <button
               onClick={closeAuthModal}
-              className="p-1 rounded-lg text-muted-foreground hover:text-foreground transition-colors text-base"
+              className="p-1 rounded-lg text-muted-foreground hover:text-foreground transition-colors text-base cursor-pointer"
               type="button"
             >
               ×
@@ -92,10 +100,10 @@ export const AuthModal: React.FC = () => {
           <div className="p-4 rounded-xl border border-border bg-muted/20 space-y-2">
             <div className="flex items-center space-x-2 text-foreground font-semibold">
               <Terminal className="w-4 h-4 text-primary shrink-0" />
-              <span>Security Challenge Prompt:</span>
+              <span>Security Question:</span>
             </div>
             <p className="text-xs text-muted-foreground leading-relaxed font-mono">
-              Session <span className="text-primary font-bold">{hexCode}</span>: Enter the developer passkey to unlock the Management Dashboard, Markdown Editor &amp; Admin controls?
+              {questionText}
             </p>
           </div>
 
@@ -143,7 +151,7 @@ export const AuthModal: React.FC = () => {
           {/* Action Buttons */}
           <div className="flex items-center justify-between pt-3 border-t border-border">
             <span className="text-[11px] text-muted-foreground font-mono">
-              Read-only mode active
+              Public view active
             </span>
 
             <div className="flex space-x-2">
@@ -159,7 +167,7 @@ export const AuthModal: React.FC = () => {
                 variant="default"
               >
                 <KeyRound className="w-3.5 h-3.5 mr-1" />
-                <span>Unlock Access</span>
+                <span>Unlock Dashboard</span>
               </Button>
             </div>
           </div>

@@ -10,8 +10,8 @@ import {
   Sparkles,
   Plus,
   Lock,
-  Unlock,
   LogOut,
+  LayoutDashboard,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Project } from "@/lib/api";
@@ -26,11 +26,12 @@ interface TopNavbarProps {
   onNavigateHome: () => void;
   onNavigateLogs: () => void;
   onNavigateFeatures: () => void;
+  onNavigateDashboard: () => void;
   onOpenSearch: () => void;
   onOpenNewDocModal: () => void;
 }
 
-// Global top navigation bar with project switcher context, quick navigation links, developer auth gate, and theme toggle
+// Global top navigation bar providing public reader links or developer dashboard management controls
 export const TopNavbar: React.FC<TopNavbarProps> = ({
   activeProject,
   mobileMenuOpen,
@@ -38,10 +39,11 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
   onNavigateHome,
   onNavigateLogs,
   onNavigateFeatures,
+  onNavigateDashboard,
   onOpenSearch,
   onOpenNewDocModal,
 }) => {
-  const { isUnlocked, openAuthModal, lock, requireAuth } = useAuth();
+  const { isUnlocked, openAuthModal, lock } = useAuth();
 
   return (
     <header className="h-14 px-4 md:px-6 border-b border-border bg-card flex items-center justify-between shrink-0 z-20 select-none font-sans shadow-2xs">
@@ -69,6 +71,11 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
           <Badge variant="outline" className="hidden sm:inline-flex text-xs font-mono">
             {activeProject.name}
           </Badge>
+          {isUnlocked && (
+            <Badge variant="emerald" className="hidden lg:inline-flex text-[10px] font-mono">
+              Dashboard Active
+            </Badge>
+          )}
         </div>
       </div>
 
@@ -90,17 +97,31 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
           <History className="w-3.5 h-3.5" />
           <span>Activity Logs</span>
         </button>
-        <button
-          onClick={onNavigateFeatures}
-          className="px-3 py-1.5 rounded-md hover:bg-muted hover:text-foreground transition-colors cursor-pointer flex items-center space-x-1.5"
-          type="button"
-        >
-          <Sparkles className="w-3.5 h-3.5 text-cyan-500" />
-          <span>Roadmap</span>
-        </button>
+
+        {/* Developer / Dashboard Links (Only visible when unlocked) */}
+        {isUnlocked && (
+          <>
+            <button
+              onClick={onNavigateDashboard}
+              className="px-3 py-1.5 rounded-md hover:bg-muted hover:text-foreground transition-colors cursor-pointer flex items-center space-x-1.5 text-primary"
+              type="button"
+            >
+              <LayoutDashboard className="w-3.5 h-3.5" />
+              <span>Management Dashboard</span>
+            </button>
+            <button
+              onClick={onNavigateFeatures}
+              className="px-3 py-1.5 rounded-md hover:bg-muted hover:text-foreground transition-colors cursor-pointer flex items-center space-x-1.5"
+              type="button"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-cyan-500" />
+              <span>Roadmap & Epics</span>
+            </button>
+          </>
+        )}
       </nav>
 
-      {/* Right: Search, Auth Gate, Status, New Doc, Theme */}
+      {/* Right: Search, Developer Auth Trigger, New Doc, Theme */}
       <div className="flex items-center gap-2">
         {/* Quick Search Button */}
         <button
@@ -109,59 +130,47 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
           type="button"
         >
           <Search className="w-3.5 h-3.5" />
-          <span>Search...</span>
+          <span>Search docs...</span>
           <kbd className="px-1.5 py-0.2 rounded bg-background text-[10px] font-mono border border-border">
             ⌘K
           </kbd>
         </button>
 
-        {/* Developer Auth Status Gate */}
+        {/* Dashboard Access Control */}
         {isUnlocked ? (
-          <div className="flex items-center space-x-1">
-            <Badge variant="emerald" className="hidden sm:inline-flex items-center gap-1 font-mono text-[10px]">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span>Developer Unlocked</span>
-            </Badge>
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              onClick={onOpenNewDocModal}
+              className="hidden sm:inline-flex h-8 px-3"
+            >
+              <Plus className="w-3.5 h-3.5 mr-1" />
+              <span>New Page</span>
+            </Button>
+
             <Button
               variant="outline"
               size="sm"
               onClick={lock}
               className="h-8 px-2.5 text-xs text-muted-foreground hover:text-destructive hover:border-destructive/30"
-              title="Lock Developer Dashboard"
+              title="Lock and return to public view"
             >
               <LogOut className="w-3.5 h-3.5 mr-1" />
-              <span className="hidden md:inline">Lock</span>
+              <span>Exit Dashboard</span>
             </Button>
           </div>
         ) : (
           <Button
             variant="outline"
             size="sm"
-            onClick={() => openAuthModal()}
-            className="h-8 px-2.5 text-xs border-dashed text-muted-foreground hover:text-foreground"
-            title="Authenticate to unlock developer controls"
+            onClick={() => openAuthModal(onNavigateDashboard)}
+            className="h-8 px-3 text-xs border-dashed text-muted-foreground hover:text-foreground hover:border-primary/40"
+            title="Authenticate to open management dashboard"
           >
             <Lock className="w-3.5 h-3.5 mr-1 text-amber-500" />
-            <span className="hidden sm:inline">Guest (Unlock)</span>
-            <span className="sm:hidden">Unlock</span>
+            <span>Dashboard 🔒</span>
           </Button>
         )}
-
-        {/* Database Health Badge */}
-        <div className="hidden 2xl:flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-border bg-muted/30 text-[11px] font-mono text-muted-foreground">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span>D1 Live</span>
-        </div>
-
-        {/* New Doc Action */}
-        <Button
-          size="sm"
-          onClick={() => requireAuth(onOpenNewDocModal)}
-          className="hidden sm:inline-flex h-8 px-3"
-        >
-          <Plus className="w-3.5 h-3.5 mr-1" />
-          <span>New Page</span>
-        </Button>
 
         {/* Theme Selector */}
         <ThemeToggle />

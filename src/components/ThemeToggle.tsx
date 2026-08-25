@@ -13,16 +13,16 @@ interface ThemeOption {
 }
 
 const themeOptions: ThemeOption[] = [
-  { id: "midnight", name: "Midnight Obsidian", icon: Moon, accent: "#10b981", bg: "#050508" },
-  { id: "slate", name: "Cyber Slate", icon: Monitor, accent: "#38bdf8", bg: "#0b1120" },
-  { id: "synthwave", name: "Synthwave Violet", icon: Sparkles, accent: "#c084fc", bg: "#0b0714" },
+  { id: "midnight", name: "Midnight Dark", icon: Moon, accent: "#10b981", bg: "#090a0f" },
+  { id: "slate", name: "Cyber Slate", icon: Monitor, accent: "#38bdf8", bg: "#0f172a" },
+  { id: "synthwave", name: "Synthwave Violet", icon: Sparkles, accent: "#c084fc", bg: "#0e0a1a" },
   { id: "light", name: "Clean Light", icon: Sun, accent: "#059669", bg: "#ffffff" },
 ];
 
-// Interactive Theme Switcher dropdown selector supporting multiple developer themes
+// Interactive theme switcher dropdown selector supporting multiple developer themes
 export const ThemeToggle: React.FC = () => {
   const { theme, setTheme } = useTheme();
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState<boolean>(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Closes dropdown when clicking outside
@@ -40,20 +40,21 @@ export const ThemeToggle: React.FC = () => {
   const IconComponent = activeOption.icon;
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div className="relative select-none font-sans" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg theme-bg-card theme-bg-hover border theme-border text-xs theme-text-primary transition-all cursor-pointer shadow-xs"
         title="Change Theme"
+        type="button"
       >
         <Palette className="w-3.5 h-3.5 theme-accent" />
-        <span className="text-[11px] font-medium">{activeOption.name}</span>
+        <span className="text-[11px] font-medium hidden sm:inline">{activeOption.name}</span>
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-52 rounded-xl theme-bg-card border theme-border shadow-2xl p-1.5 z-50 text-xs font-sans animate-in fade-in zoom-in-95">
-          <div className="px-2 py-1 text-[10px] uppercase tracking-wider font-semibold theme-text-muted font-mono">
-            Select Color Theme
+        <div className="absolute right-0 mt-2 w-48 rounded-xl theme-bg-card border theme-border shadow-2xl p-1.5 z-50 text-xs font-sans animate-in fade-in zoom-in-95">
+          <div className="px-2 py-1 text-[10px] uppercase tracking-wider font-bold theme-text-muted font-mono">
+            Theme Palette
           </div>
 
           <div className="space-y-0.5 mt-1">
@@ -73,6 +74,7 @@ export const ThemeToggle: React.FC = () => {
                       ? "theme-accent-bg theme-accent font-semibold"
                       : "theme-text-secondary hover:theme-text-primary theme-bg-hover"
                   }`}
+                  type="button"
                 >
                   <div className="flex items-center gap-2">
                     <span

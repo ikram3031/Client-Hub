@@ -13,7 +13,7 @@
   --accent-color: #059669;
   --accent-light: rgba(5, 150, 105, 0.1);
   --accent-border: rgba(5, 150, 105, 0.25);
-  --code-bg: #0f172a;
+  --code-bg: #0d1117;
   --code-text: #f8fafc;
 }
 
@@ -30,15 +30,15 @@
   --accent-color: #059669;
   --accent-light: rgba(5, 150, 105, 0.1);
   --accent-border: rgba(5, 150, 105, 0.25);
-  --code-bg: #0f172a;
+  --code-bg: #0d1117;
   --code-text: #f8fafc;
 }
 
 [data-theme="midnight"] {
   --bg-primary: #090a0f;
   --bg-secondary: #11131a;
-  --bg-card: #171923;
-  --bg-hover: #222533;
+  --bg-card: #161822;
+  --bg-hover: #202330;
   --bg-accent: #262938;
   --border-color: #262938;
   --text-primary: #f8fafc;
@@ -123,5 +123,23 @@ html, body {
 }
 
 ::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 9999px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: var(--text-muted);
 }

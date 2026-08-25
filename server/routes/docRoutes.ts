@@ -60,6 +60,31 @@ docRouter.post("/", async (req: Request, res: Response) => {
   }
 });
 
+// 2.5 GET /api/projects/:projectSlug/docs/:docId - Get single doc by ID or Slug
+docRouter.get("/:docId", async (req: Request, res: Response) => {
+  try {
+    const projectSlug = req.params.projectSlug as string;
+    const docId = req.params.docId as string;
+
+    const docs = await queryD1(
+      `SELECT * FROM docs WHERE (id = ? OR slug = ?) AND project_slug = ? LIMIT 1`,
+      [docId, docId, projectSlug]
+    );
+
+    if (docs.length === 0) {
+      return res.status(404).json({ success: false, error: "Document not found" });
+    }
+
+    const d = docs[0];
+    res.json({
+      success: true,
+      doc: { ...d, tags: JSON.parse(d.tags || "[]") },
+    });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // 3. PUT /api/projects/:projectSlug/docs/:docId - Update doc
 docRouter.put("/:docId", async (req: Request, res: Response) => {
   try {
@@ -67,12 +92,16 @@ docRouter.put("/:docId", async (req: Request, res: Response) => {
     const docId = req.params.docId as string;
     const { title, content, category, tags, lastEditedBy } = req.body;
 
-    const existing = await queryD1(`SELECT * FROM docs WHERE id = ? AND project_slug = ?`, [docId, projectSlug]);
+    const existing = await queryD1(
+      `SELECT * FROM docs WHERE (id = ? OR slug = ?) AND project_slug = ? LIMIT 1`,
+      [docId, docId, projectSlug]
+    );
     if (existing.length === 0) {
       return res.status(404).json({ success: false, error: "Document not found" });
     }
 
     const current = existing[0];
+    const targetId = current.id;
     const newTitle = title || current.title;
     const newContent = content !== undefined ? content : current.content;
     const newCategory = category || current.category;
@@ -81,10 +110,10 @@ docRouter.put("/:docId", async (req: Request, res: Response) => {
 
     await queryD1(
       `UPDATE docs SET title = ?, content = ?, category = ?, tags = ?, last_edited_by = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
-      [newTitle, newContent, newCategory, newTags, newEditor, docId]
+      [newTitle, newContent, newCategory, newTags, newEditor, targetId]
     );
 
-    const updated = await queryD1(`SELECT * FROM docs WHERE id = ?`, [docId]);
+    const updated = await queryD1(`SELECT * FROM docs WHERE id = ?`, [targetId]);
     res.json({
       success: true,
       doc: { ...updated[0], tags: JSON.parse(updated[0].tags || "[]") },
@@ -100,7 +129,10 @@ docRouter.delete("/:docId", async (req: Request, res: Response) => {
     const projectSlug = req.params.projectSlug as string;
     const docId = req.params.docId as string;
 
-    await queryD1(`DELETE FROM docs WHERE id = ? AND project_slug = ?`, [docId, projectSlug]);
+    await queryD1(
+      `DELETE FROM docs WHERE (id = ? OR slug = ?) AND project_slug = ?`,
+      [docId, docId, projectSlug]
+    );
     res.json({ success: true, message: "Document deleted successfully" });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });

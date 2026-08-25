@@ -11,17 +11,18 @@ import {
   Feature,
   ActionLog,
 } from "@/lib/api";
-import { SidebarTree, ViewSelection } from "@/components/SidebarTree";
-import { DocViewer } from "@/components/DocViewer";
+import { SidebarNavigation, ViewSelection } from "@/components/SidebarNavigation";
+import { DocReader } from "@/components/DocReader";
 import { FolderOverview } from "@/components/FolderOverview";
-import { LogViewer } from "@/components/LogViewer";
+import { ActivityChangelog } from "@/components/ActivityChangelog";
+import { FeaturesRoadmap } from "@/components/FeaturesRoadmap";
 import { ProjectOverview } from "@/components/ProjectOverview";
 import { NewDocModal } from "@/components/NewDocModal";
 import { NewProjectModal } from "@/components/NewProjectModal";
-import { ThemeToggle } from "@/components/ThemeToggle";
-import { Menu, X } from "lucide-react";
+import { SearchModal } from "@/components/SearchModal";
+import { TopNavbar } from "@/components/TopNavbar";
 
-// Main Hub Page layout connecting hierarchical sidebar tree with dynamic content viewports
+// Main documentation hub connecting hierarchical sidebar navigation with the reader engine and changelog
 const HomePage: React.FC = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [activeProjectSlug, setActiveProjectSlug] = useState<string>("docsnlogs");
@@ -30,6 +31,7 @@ const HomePage: React.FC = () => {
   const [logs, setLogs] = useState<ActionLog[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
+  const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
 
   // View state selection
   const [currentSelection, setCurrentSelection] = useState<ViewSelection>({
@@ -42,7 +44,7 @@ const HomePage: React.FC = () => {
   const [docModalCategory, setDocModalCategory] = useState<string | undefined>();
   const [isProjectModalOpen, setIsProjectModalOpen] = useState<boolean>(false);
 
-  // Loads all registered projects on initial mount
+  // Loads all registered projects on mount
   const loadProjects = async () => {
     try {
       const projs = await fetchProjects();
@@ -52,7 +54,7 @@ const HomePage: React.FC = () => {
         setActiveProjectSlug(found.slug);
       }
     } catch (err) {
-      console.error("Failed to load projects", err);
+      console.error("Failed to load projects:", err);
     }
   };
 
@@ -69,7 +71,7 @@ const HomePage: React.FC = () => {
       setFeatures(featsData);
       setLogs(logsData);
     } catch (err) {
-      console.error("Failed to load project details", err);
+      console.error("Failed to load project details:", err);
     } finally {
       setIsLoading(false);
     }
@@ -84,6 +86,18 @@ const HomePage: React.FC = () => {
       loadProjectData(activeProjectSlug);
     }
   }, [activeProjectSlug]);
+
+  // Global keyboard shortcut listener for Command/Ctrl + K to open search palette
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        setIsSearchOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   // Handles changing the active project
   const handleSelectProject = (slug: string) => {
@@ -119,6 +133,16 @@ const HomePage: React.FC = () => {
     setCurrentSelection({ type: "project-overview", projectSlug: activeProjectSlug });
   };
 
+  // Navigates to live activity logs view
+  const handleNavigateLogs = () => {
+    setCurrentSelection({ type: "logs", projectSlug: activeProjectSlug });
+  };
+
+  // Navigates to features and roadmap view
+  const handleNavigateFeatures = () => {
+    setCurrentSelection({ type: "features", projectSlug: activeProjectSlug });
+  };
+
   const activeProject = projects.find((p) => p.slug === activeProjectSlug) || {
     id: "default",
     name: "docsNlogs",
@@ -136,75 +160,77 @@ const HomePage: React.FC = () => {
       : null;
 
   return (
-    <div className="flex h-screen w-screen theme-bg-primary theme-text-primary overflow-hidden font-sans select-none">
-      {/* Left Sidebar Tree */}
-      <div
-        className={`${
-          mobileMenuOpen ? "fixed inset-y-0 left-0 z-40 flex" : "hidden md:flex"
-        } h-full shrink-0`}
-      >
-        <SidebarTree
-          projects={projects}
-          activeProjectSlug={activeProjectSlug}
-          onSelectProject={(slug) => {
-            handleSelectProject(slug);
-            setMobileMenuOpen(false);
-          }}
-          docs={docs}
-          features={features}
-          currentSelection={currentSelection}
-          onSelect={(sel) => {
-            setCurrentSelection(sel);
-            setMobileMenuOpen(false);
-          }}
-          onOpenNewDocModal={handleOpenNewDocModal}
-          onOpenNewProjectModal={() => setIsProjectModalOpen(true)}
-        />
-      </div>
+    <div className="flex flex-col h-screen w-screen theme-bg-primary theme-text-primary overflow-hidden font-sans select-none">
+      {/* 1. Global Top Navigation Bar */}
+      <TopNavbar
+        activeProject={activeProject}
+        mobileMenuOpen={mobileMenuOpen}
+        onToggleMobileMenu={() => setMobileMenuOpen(!mobileMenuOpen)}
+        onNavigateHome={handleNavigateHome}
+        onNavigateLogs={handleNavigateLogs}
+        onNavigateFeatures={handleNavigateFeatures}
+        onOpenSearch={() => setIsSearchOpen(true)}
+        onOpenNewDocModal={() => handleOpenNewDocModal()}
+      />
 
-      {/* Main Container */}
-      <div className="flex-1 flex flex-col h-full overflow-hidden theme-bg-primary">
-        {/* Top Navigation Bar */}
-        <header className="h-14 px-4 md:px-8 border-b theme-border theme-bg-secondary flex items-center justify-between shrink-0 z-10 shadow-2xs">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-1.5 rounded-lg theme-bg-card border theme-border theme-text-primary"
-            >
-              {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
-            </button>
-            <div
-              onClick={handleNavigateHome}
-              className="flex items-center gap-2 cursor-pointer group"
-            >
-              <span className="font-black text-sm tracking-tight theme-text-primary flex items-center gap-1.5 group-hover:theme-accent transition-colors">
-                <span className="text-base">📖</span> docsNlogs
-              </span>
-              <span className="theme-text-muted">/</span>
-              <span className="text-xs font-bold theme-accent font-mono">
-                {activeProject.name}
-              </span>
-            </div>
-          </div>
+      {/* 2. Main Workspace (Sidebar + Dynamic Viewport) */}
+      <div className="flex-1 flex h-[calc(100vh-3.5rem)] overflow-hidden relative">
+        {/* Mobile Drawer Backdrop */}
+        {mobileMenuOpen && (
+          <div
+            onClick={() => setMobileMenuOpen(false)}
+            className="fixed inset-0 z-30 bg-black/60 backdrop-blur-xs md:hidden animate-in fade-in"
+          />
+        )}
 
-          <div className="flex items-center gap-3">
-            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full theme-bg-card border theme-border text-[11px] font-medium theme-text-muted">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span>D1 Edge Live</span>
-            </div>
-            <ThemeToggle />
-          </div>
-        </header>
+        {/* Left Sidebar Navigation */}
+        <div
+          className={`${
+            mobileMenuOpen
+              ? "fixed inset-y-0 left-0 z-40 flex shadow-2xl animate-in slide-in-from-left duration-200"
+              : "hidden md:flex"
+          } h-full shrink-0`}
+        >
+          <SidebarNavigation
+            projects={projects}
+            activeProjectSlug={activeProjectSlug}
+            onSelectProject={(slug) => {
+              handleSelectProject(slug);
+              setMobileMenuOpen(false);
+            }}
+            docs={docs}
+            features={features}
+            currentSelection={currentSelection}
+            onSelect={(sel) => {
+              setCurrentSelection(sel);
+              setMobileMenuOpen(false);
+            }}
+            onOpenNewDocModal={(cat) => {
+              handleOpenNewDocModal(cat);
+              setMobileMenuOpen(false);
+            }}
+            onOpenNewProjectModal={() => {
+              setIsProjectModalOpen(true);
+              setMobileMenuOpen(false);
+            }}
+            onOpenSearch={() => {
+              setIsSearchOpen(true);
+              setMobileMenuOpen(false);
+            }}
+            onCloseMobileDrawer={() => setMobileMenuOpen(false)}
+          />
+        </div>
 
-        {/* Viewport Content */}
-        <main className="flex-1 flex flex-col h-full overflow-hidden">
+        {/* Main Content Viewport */}
+        <main className="flex-1 flex flex-col h-full overflow-hidden theme-bg-primary relative">
           {isLoading ? (
             <div className="flex-1 flex flex-col items-center justify-center theme-text-muted gap-3">
-              <div className="w-8 h-8 rounded-full border-2 theme-accent-border border-t-emerald-500 animate-spin" />
+              <div className="w-8 h-8 rounded-full border-2 border-emerald-500/20 border-t-emerald-500 animate-spin" />
               <span className="text-xs font-mono font-medium">Syncing with Cloudflare D1...</span>
             </div>
           ) : (
             <>
+              {/* Overview View */}
               {currentSelection.type === "project-overview" && (
                 <ProjectOverview
                   project={activeProject}
@@ -224,19 +250,16 @@ const HomePage: React.FC = () => {
                       docSlug: slug,
                     })
                   }
-                  onNavigateLogs={() =>
-                    setCurrentSelection({
-                      type: "logs",
-                      projectSlug: activeProjectSlug,
-                    })
-                  }
+                  onNavigateLogs={handleNavigateLogs}
                   onOpenNewDocModal={handleOpenNewDocModal}
                 />
               )}
 
+              {/* Folder / Category Overview View */}
               {currentSelection.type === "folder-overview" && (
                 <FolderOverview
                   projectSlug={activeProjectSlug}
+                  projectName={activeProject.name}
                   category={currentSelection.category}
                   docs={docs}
                   onSelectDoc={(slug) =>
@@ -251,9 +274,11 @@ const HomePage: React.FC = () => {
                 />
               )}
 
+              {/* 📄 Main Content Reader Engine (`DocReader.tsx`) */}
               {currentSelection.type === "doc" && selectedDoc && (
-                <DocViewer
+                <DocReader
                   doc={selectedDoc}
+                  allDocs={docs}
                   projectSlug={activeProjectSlug}
                   onDocUpdated={() => loadProjectData(activeProjectSlug)}
                   onDocDeleted={() => {
@@ -270,16 +295,42 @@ const HomePage: React.FC = () => {
                       category: cat,
                     })
                   }
+                  onNavigateDoc={(slug) =>
+                    setCurrentSelection({
+                      type: "doc",
+                      projectSlug: activeProjectSlug,
+                      docSlug: slug,
+                    })
+                  }
                   onNavigateHome={handleNavigateHome}
                 />
               )}
 
+              {/* 📜 AI Action Logs / Changelog Page */}
               {currentSelection.type === "logs" && (
-                <LogViewer
+                <ActivityChangelog
                   projectSlug={activeProjectSlug}
+                  projectName={activeProject.name}
                   logs={logs}
                   featureKey={currentSelection.featureKey}
                   onRefresh={() => loadProjectData(activeProjectSlug)}
+                  onNavigateHome={handleNavigateHome}
+                />
+              )}
+
+              {/* Features & Epics Roadmap */}
+              {currentSelection.type === "features" && (
+                <FeaturesRoadmap
+                  projectSlug={activeProjectSlug}
+                  projectName={activeProject.name}
+                  features={features}
+                  onSelectFeatureLogs={(featKey) =>
+                    setCurrentSelection({
+                      type: "logs",
+                      projectSlug: activeProjectSlug,
+                      featureKey: featKey,
+                    })
+                  }
                   onNavigateHome={handleNavigateHome}
                 />
               )}
@@ -288,7 +339,34 @@ const HomePage: React.FC = () => {
         </main>
       </div>
 
-      {/* Modals */}
+      {/* 3. Global Modals */}
+      <SearchModal
+        isOpen={isSearchOpen}
+        onClose={() => setIsSearchOpen(false)}
+        docs={docs}
+        logs={logs}
+        onSelectDoc={(slug) => {
+          setCurrentSelection({
+            type: "doc",
+            projectSlug: activeProjectSlug,
+            docSlug: slug,
+          });
+        }}
+        onSelectCategory={(cat) => {
+          setCurrentSelection({
+            type: "folder-overview",
+            projectSlug: activeProjectSlug,
+            category: cat,
+          });
+        }}
+        onSelectLogs={() => {
+          setCurrentSelection({
+            type: "logs",
+            projectSlug: activeProjectSlug,
+          });
+        }}
+      />
+
       <NewDocModal
         isOpen={isDocModalOpen}
         onClose={() => setIsDocModalOpen(false)}

@@ -231,10 +231,37 @@ export const LogsPage: React.FC<LogsPageProps> = ({ projectSlug }) => {
     await handleCopy(md, 'full-changelog');
   };
 
-  const filteredLogs = logs.filter(l => {
-    if (scopeFilter === 'all') return true;
-    return (l.scope || '').toLowerCase() === scopeFilter.toLowerCase();
-  });
+  const formatLogDate = (timeStr?: string) => {
+    if (!timeStr) return '';
+    try {
+      const parsedStr = timeStr.includes('T') || timeStr.includes('Z') ? timeStr : timeStr.replace(' ', 'T');
+      const d = new Date(parsedStr);
+      if (isNaN(d.getTime())) {
+        return timeStr;
+      }
+      return format(d, 'MMM d, h:mm a');
+    } catch (e) {
+      return timeStr;
+    }
+  };
+
+  const filteredLogs = logs
+    .filter(l => {
+      if (scopeFilter === 'all') return true;
+      return (l.scope || '').toLowerCase() === scopeFilter.toLowerCase();
+    })
+    .sort((a, b) => {
+      // 1. Sort by timestamp descending (newest date first)
+      const timeA = new Date(a.created_at || a.timestamp || 0).getTime();
+      const timeB = new Date(b.created_at || b.timestamp || 0).getTime();
+      if (!isNaN(timeA) && !isNaN(timeB) && timeB !== timeA) {
+        return timeB - timeA;
+      }
+      // 2. Secondary sort: Numeric ID descending (e.g. TL-15 > TL-14 > TL-01, ITC-41 > ITC-40 > ITC-01)
+      const numA = parseInt((a.id || '').replace(/\D/g, ''), 10) || 0;
+      const numB = parseInt((b.id || '').replace(/\D/g, ''), 10) || 0;
+      return numB - numA;
+    });
 
   const uniqueScopes = Array.from(new Set(logs.map(l => (l.scope || '').toLowerCase()).filter(Boolean)));
 
@@ -394,7 +421,7 @@ export const LogsPage: React.FC<LogsPageProps> = ({ projectSlug }) => {
                 const files = log.modifiedFiles || log.changedFiles || [];
                 const prompt = log.promptUsed || log.prompt_used || '';
                 const timeStr = log.timestamp || log.created_at || new Date().toISOString();
-                const formattedDate = format(new Date(timeStr), 'MMM d, h:mm a');
+                const formattedDate = formatLogDate(timeStr);
                 const capitalizedSummary = formatSummary(log.summary);
 
                 return (
@@ -512,7 +539,7 @@ export const LogsPage: React.FC<LogsPageProps> = ({ projectSlug }) => {
                 const files = log.modifiedFiles || log.changedFiles || [];
                 const prompt = log.promptUsed || log.prompt_used || '';
                 const timeStr = log.timestamp || log.created_at || new Date().toISOString();
-                const formattedDate = format(new Date(timeStr), 'MMM d, h:mm a');
+                const formattedDate = formatLogDate(timeStr);
                 const capitalizedSummary = formatSummary(log.summary);
 
                 return (
@@ -628,7 +655,7 @@ export const LogsPage: React.FC<LogsPageProps> = ({ projectSlug }) => {
                 const files = log.modifiedFiles || log.changedFiles || [];
                 const prompt = log.promptUsed || log.prompt_used || '';
                 const timeStr = log.timestamp || log.created_at || new Date().toISOString();
-                const formattedDate = format(new Date(timeStr), 'MMM d, h:mm a');
+                const formattedDate = formatLogDate(timeStr);
                 const capitalizedSummary = formatSummary(log.summary);
 
                 return (

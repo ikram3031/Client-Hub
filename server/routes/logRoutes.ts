@@ -82,8 +82,8 @@ logRouter.get("/", async (req: Request, res: Response) => {
       params.push(subTaskKey);
     }
 
-    const maxLimit = parseInt(limit as string, 10) || 100;
-    sql += ` ORDER BY created_at DESC LIMIT ${maxLimit}`;
+    const maxLimit = parseInt(limit as string, 10) || 250;
+    sql += ` ORDER BY created_at DESC, rowid DESC LIMIT ${maxLimit}`;
 
     const logs = await queryD1(sql, params);
     const formatted = logs.map((l: any) => {
@@ -103,6 +103,26 @@ logRouter.get("/", async (req: Request, res: Response) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
+
+const getBDTime = () => {
+  const now = new Date();
+  try {
+    const bdFormatter = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Asia/Dhaka",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+    });
+    return bdFormatter.format(now).replace(", ", " ");
+  } catch (e) {
+    const d = new Date(now.getTime() + 6 * 3600 * 1000);
+    return d.toISOString().replace("T", " ").slice(0, 19);
+  }
+};
 
 // 2. POST /api/projects/:projectSlug/logs - AI Log ingestion endpoint with sequential <LogID> standard
 logRouter.post("/", async (req: Request, res: Response) => {
@@ -141,12 +161,13 @@ logRouter.post("/", async (req: Request, res: Response) => {
     const cleanFeatureKey = featureKey ? String(featureKey).toUpperCase() : null;
     const cleanSubTaskKey = subTaskKey ? String(subTaskKey).toUpperCase() : null;
     const cleanFiles = Array.isArray(rawFiles) ? rawFiles : [];
+    const bdCreatedAt = getBDTime();
 
     // Check if provided Log ID is already in use in this project; if so, update it
     const existing = await queryD1(`SELECT id FROM logs WHERE project_slug = ? AND id = ?`, [projectSlug, finalLogId]);
     if (existing.length > 0) {
       await queryD1(
-        `UPDATE logs SET scope = ?, action = ?, summary = ?, prompt_used = ?, changed_files = ?, diff_summary = ?, commit_id = ? WHERE project_slug = ? AND id = ?`,
+        `UPDATE logs SET scope = ?, action = ?, summary = ?, prompt_used = ?, changed_files = ?, diff_summary = ?, commit_id = ?, created_at = ? WHERE project_slug = ? AND id = ?`,
         [
           finalScope.toLowerCase(),
           finalAction.toLowerCase(),
@@ -155,13 +176,14 @@ logRouter.post("/", async (req: Request, res: Response) => {
           JSON.stringify(cleanFiles),
           rawDiffSummary,
           rawCommitId,
+          bdCreatedAt,
           projectSlug,
           finalLogId,
         ]
       );
     } else {
       await queryD1(
-        `INSERT INTO logs (id, project_slug, scope, feature_key, sub_task_key, action, summary, prompt_used, changed_files, diff_summary, commit_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO logs (id, project_slug, scope, feature_key, sub_task_key, action, summary, prompt_used, changed_files, diff_summary, commit_id, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           finalLogId,
           projectSlug,
@@ -174,6 +196,7 @@ logRouter.post("/", async (req: Request, res: Response) => {
           JSON.stringify(cleanFiles),
           rawDiffSummary,
           rawCommitId,
+          bdCreatedAt,
         ]
       );
     }

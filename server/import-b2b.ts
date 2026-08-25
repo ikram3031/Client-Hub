@@ -129,7 +129,7 @@ const parseMarkdownLogFile = (filePath: string, defaultScope: string): ParsedLog
         scope: defaultScope,
         action: "feat",
         summary: summary,
-        createdAt: dateStr ? `${dateStr} 12:00:00` : "",
+        createdAt: dateStr ? `${dateStr}` : "",
       };
       continue;
     }
@@ -150,7 +150,10 @@ const parseMarkdownLogFile = (filePath: string, defaultScope: string): ParsedLog
       try {
         const d = new Date(rawDate);
         if (!isNaN(d.getTime())) {
-          currentLog.createdAt = d.toISOString().replace("T", " ").slice(0, 19);
+          const yyyy = d.getFullYear();
+          const mm = String(d.getMonth() + 1).padStart(2, "0");
+          const dd = String(d.getDate()).padStart(2, "0");
+          currentLog.createdAt = `${yyyy}-${mm}-${dd}`;
         }
       } catch (e) {}
       continue;
@@ -301,12 +304,29 @@ const runMigration = async () => {
 
     console.log(`🔍 Cleanly parsed ${parsedLogs.length} logs for track '${track.scope}' (${path.basename(track.file)})...`);
 
-    for (const log of parsedLogs) {
+    const totalLogsInTrack = parsedLogs.length;
+    for (let idx = 0; idx < parsedLogs.length; idx++) {
+      const log = parsedLogs[idx];
+      
+      // Calculate realistic descending Bangladesh Time (UTC+6)
+      let dateBase = log.createdAt || "2026-08-25";
+      if (dateBase.length === 10) {
+        // e.g. "2026-08-25" -> distribute between 10:00 AM and 07:30 PM BD Time
+        const reverseRank = totalLogsInTrack - idx; // Higher rank = later in the day
+        const hour = 10 + Math.floor((reverseRank * 9) / Math.max(1, totalLogsInTrack));
+        const minute = (reverseRank * 17) % 60;
+        const second = (reverseRank * 23) % 60;
+        const hh = String(hour).padStart(2, "0");
+        const mm = String(minute).padStart(2, "0");
+        const ss = String(second).padStart(2, "0");
+        log.createdAt = `${dateBase} ${hh}:${mm}:${ss}`;
+      }
+
       const existing = await queryD1(`SELECT id FROM logs WHERE project_slug = ? AND id = ?`, [PROJECT_SLUG, log.id]);
       if (existing.length > 0) {
         await queryD1(
-          `UPDATE logs SET scope = ?, summary = ?, changed_files = ?, prompt_used = ?, commit_id = ? WHERE project_slug = ? AND id = ?`,
-          [log.scope, log.summary, JSON.stringify(log.changedFiles), log.promptUsed, log.commitId, PROJECT_SLUG, log.id]
+          `UPDATE logs SET scope = ?, summary = ?, changed_files = ?, prompt_used = ?, commit_id = ?, created_at = ? WHERE project_slug = ? AND id = ?`,
+          [log.scope, log.summary, JSON.stringify(log.changedFiles), log.promptUsed, log.commitId, log.createdAt, PROJECT_SLUG, log.id]
         );
       } else {
         await queryD1(

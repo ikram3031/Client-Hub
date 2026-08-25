@@ -4,51 +4,36 @@ import React, { useState, useEffect, useCallback, Suspense } from "react";
 import {
   fetchProjects,
   fetchDocs,
-  fetchFeatures,
   fetchLogs,
   Project,
   DocItem,
-  Feature,
   ActionLog,
 } from "@/lib/api";
-import { useAuth } from "@/lib/auth";
 import { SidebarNavigation, ViewSelection } from "@/components/SidebarNavigation";
 import { DocReader } from "@/components/DocReader";
 import { FolderOverview } from "@/components/FolderOverview";
 import { ActivityChangelog } from "@/components/ActivityChangelog";
-import { FeaturesRoadmap } from "@/components/FeaturesRoadmap";
-import { ProjectOverview } from "@/components/ProjectOverview";
-import { NewDocModal } from "@/components/NewDocModal";
-import { NewProjectModal } from "@/components/NewProjectModal";
 import { SearchModal } from "@/components/SearchModal";
 import { TopNavbar } from "@/components/TopNavbar";
-import { AuthModal } from "@/components/AuthModal";
 
-// Documentation hub connecting public read-only reader with developer auth gating and deep-linking
+// Lightweight documentation reader and AI activity logs viewer
 const DocsApp: React.FC = () => {
-  const { isUnlocked, openAuthModal } = useAuth();
   const [projects, setProjects] = useState<Project[]>([]);
   const [activeProjectSlug, setActiveProjectSlug] = useState<string>("docsnlogs");
   const [docs, setDocs] = useState<DocItem[]>([]);
-  const [features, setFeatures] = useState<Feature[]>([]);
   const [logs, setLogs] = useState<ActionLog[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
   const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
 
-  // View state selection: defaults to public document reader view
+  // View state selection: defaults to reading view
   const [currentSelection, setCurrentSelection] = useState<ViewSelection>({
     type: "doc",
     projectSlug: "docsnlogs",
     docSlug: "",
   });
 
-  // Modal dialog states
-  const [isDocModalOpen, setIsDocModalOpen] = useState<boolean>(false);
-  const [docModalCategory, setDocModalCategory] = useState<string | undefined>();
-  const [isProjectModalOpen, setIsProjectModalOpen] = useState<boolean>(false);
-
-  // Synchronizes view selection with URL query parameters for public shareable URLs
+  // Synchronizes view selection with URL query parameters for public shareable links
   const updateUrlParams = useCallback((selection: ViewSelection) => {
     if (typeof window === "undefined") return;
     const url = new URL(window.location.href);
@@ -65,44 +50,25 @@ const DocsApp: React.FC = () => {
       url.searchParams.delete("view");
     } else if (selection.type === "logs") {
       url.searchParams.set("view", "logs");
-      if (selection.featureKey) {
-        url.searchParams.set("feat", selection.featureKey);
-      } else {
-        url.searchParams.delete("feat");
-      }
       url.searchParams.delete("doc");
       url.searchParams.delete("category");
-    } else if (selection.type === "features") {
-      url.searchParams.set("view", "features");
-      url.searchParams.delete("doc");
-      url.searchParams.delete("category");
-    } else if (selection.type === "project-overview") {
-      url.searchParams.set("view", "dashboard");
-      url.searchParams.delete("doc");
-      url.searchParams.delete("category");
-    } else {
-      url.searchParams.delete("doc");
-      url.searchParams.delete("category");
-      url.searchParams.delete("view");
     }
 
     window.history.replaceState({}, "", url.toString());
   }, []);
 
-  // Loads docs, features, and action logs for the currently selected project
+  // Loads docs and action logs for the currently selected project
   const loadProjectData = async (slug: string, initialDocSlug?: string) => {
     setIsLoading(true);
     try {
-      const [docsData, featsData, logsData] = await Promise.all([
+      const [docsData, logsData] = await Promise.all([
         fetchDocs(slug),
-        fetchFeatures(slug),
         fetchLogs(slug),
       ]);
       setDocs(docsData);
-      setFeatures(featsData);
       setLogs(logsData);
 
-      // If viewing a document or if no specific view selected, ensure a valid doc is selected
+      // Ensure a valid document is selected for reading view
       setCurrentSelection((prev) => {
         if (prev.type === "doc") {
           const targetSlug = initialDocSlug || prev.docSlug;
@@ -120,7 +86,7 @@ const DocsApp: React.FC = () => {
     }
   };
 
-  // Loads all registered projects and resolves initial view from URL query params
+  // Loads all registered projects and resolves initial view from URL parameters
   const loadProjectsAndResolveRoute = async () => {
     try {
       const projs = await fetchProjects();
@@ -132,7 +98,6 @@ const DocsApp: React.FC = () => {
         const urlDoc = params.get("doc");
         const urlCat = params.get("category");
         const urlView = params.get("view");
-        const urlFeat = params.get("feat");
 
         const matchedProject = projs.find((p) => p.slug === urlProject) || projs[0];
         const projSlug = matchedProject.slug;
@@ -145,16 +110,10 @@ const DocsApp: React.FC = () => {
           setCurrentSelection({ type: "folder-overview", projectSlug: projSlug, category: urlCat });
           await loadProjectData(projSlug);
         } else if (urlView === "logs") {
-          setCurrentSelection({ type: "logs", projectSlug: projSlug, featureKey: urlFeat || undefined });
-          await loadProjectData(projSlug);
-        } else if (urlView === "features") {
-          setCurrentSelection({ type: "features", projectSlug: projSlug });
-          await loadProjectData(projSlug);
-        } else if (urlView === "dashboard") {
-          setCurrentSelection({ type: "project-overview", projectSlug: projSlug });
+          setCurrentSelection({ type: "logs", projectSlug: projSlug });
           await loadProjectData(projSlug);
         } else {
-          // Public Default: Open the first doc in the reader
+          // Public Default: Open first doc in the reader
           setCurrentSelection({ type: "doc", projectSlug: projSlug, docSlug: "" });
           await loadProjectData(projSlug);
         }
@@ -168,7 +127,7 @@ const DocsApp: React.FC = () => {
     loadProjectsAndResolveRoute();
   }, []);
 
-  // Global keyboard shortcut listener for Command/Ctrl + K to open search palette
+  // Global keyboard shortcut for Command/Ctrl + K search modal
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
@@ -184,7 +143,6 @@ const DocsApp: React.FC = () => {
   const handleSelectProject = (slug: string) => {
     setActiveProjectSlug(slug);
     loadProjectData(slug).then(() => {
-      // In public view, switch to first doc of new project
       fetchDocs(slug).then((newDocs) => {
         if (newDocs.length > 0) {
           const newSel: ViewSelection = { type: "doc", projectSlug: slug, docSlug: newDocs[0].slug };
@@ -195,35 +153,10 @@ const DocsApp: React.FC = () => {
     });
   };
 
-  // Handles selecting a view and synchronizing URL
+  // Handles selecting a view and updating URL
   const handleSelectView = (selection: ViewSelection) => {
     setCurrentSelection(selection);
     updateUrlParams(selection);
-  };
-
-  // Opens new document modal with optional pre-selected category
-  const handleOpenNewDocModal = (category?: string) => {
-    setDocModalCategory(category);
-    setIsDocModalOpen(true);
-  };
-
-  // Callback when a document is created
-  const handleDocCreated = async (newDocSlug: string) => {
-    await loadProjectData(activeProjectSlug);
-    const newSel: ViewSelection = {
-      type: "doc",
-      projectSlug: activeProjectSlug,
-      docSlug: newDocSlug,
-    };
-    handleSelectView(newSel);
-  };
-
-  // Callback when a project is created
-  const handleProjectCreated = async (newSlug: string) => {
-    await loadProjectsAndResolveRoute();
-    setActiveProjectSlug(newSlug);
-    const newSel: ViewSelection = { type: "project-overview", projectSlug: newSlug };
-    handleSelectView(newSel);
   };
 
   // Navigates to public documentation root (first doc)
@@ -239,16 +172,6 @@ const DocsApp: React.FC = () => {
   // Navigates to live activity logs view
   const handleNavigateLogs = () => {
     handleSelectView({ type: "logs", projectSlug: activeProjectSlug });
-  };
-
-  // Navigates to features and roadmap view
-  const handleNavigateFeatures = () => {
-    handleSelectView({ type: "features", projectSlug: activeProjectSlug });
-  };
-
-  // Navigates to developer management dashboard
-  const handleNavigateDashboard = () => {
-    handleSelectView({ type: "project-overview", projectSlug: activeProjectSlug });
   };
 
   const activeProject = projects.find((p) => p.slug === activeProjectSlug) || {
@@ -269,20 +192,17 @@ const DocsApp: React.FC = () => {
 
   return (
     <div className="flex flex-col h-screen w-screen bg-background text-foreground overflow-hidden font-sans select-none">
-      {/* 1. Global Top Navigation Bar */}
+      {/* 1. Top Navigation Bar */}
       <TopNavbar
         activeProject={activeProject}
         mobileMenuOpen={mobileMenuOpen}
         onToggleMobileMenu={() => setMobileMenuOpen(!mobileMenuOpen)}
         onNavigateHome={handleNavigateHome}
         onNavigateLogs={handleNavigateLogs}
-        onNavigateFeatures={handleNavigateFeatures}
-        onNavigateDashboard={handleNavigateDashboard}
         onOpenSearch={() => setIsSearchOpen(true)}
-        onOpenNewDocModal={() => handleOpenNewDocModal()}
       />
 
-      {/* 2. Main Workspace (Sidebar + Dynamic Viewport) */}
+      {/* 2. Main Workspace (Sidebar + Reader Viewport) */}
       <div className="flex-1 flex h-[calc(100vh-3.5rem)] overflow-hidden relative">
         {/* Mobile Drawer Backdrop */}
         {mobileMenuOpen && (
@@ -308,18 +228,9 @@ const DocsApp: React.FC = () => {
               setMobileMenuOpen(false);
             }}
             docs={docs}
-            features={features}
             currentSelection={currentSelection}
             onSelect={(sel) => {
               handleSelectView(sel);
-              setMobileMenuOpen(false);
-            }}
-            onOpenNewDocModal={(cat) => {
-              handleOpenNewDocModal(cat);
-              setMobileMenuOpen(false);
-            }}
-            onOpenNewProjectModal={() => {
-              setIsProjectModalOpen(true);
               setMobileMenuOpen(false);
             }}
             onOpenSearch={() => {
@@ -330,7 +241,7 @@ const DocsApp: React.FC = () => {
           />
         </div>
 
-        {/* Main Content Viewport */}
+        {/* Main Reading Viewport */}
         <main className="flex-1 flex flex-col h-full overflow-hidden bg-background relative">
           {isLoading ? (
             <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground gap-3">
@@ -339,18 +250,13 @@ const DocsApp: React.FC = () => {
             </div>
           ) : (
             <>
-              {/* 📄 Main Content Reader Engine (`DocReader.tsx`) - Default Public View */}
+              {/* 📄 Main Content Reader Engine (`DocReader.tsx`) */}
               {currentSelection.type === "doc" && selectedDoc && (
                 <DocReader
                   doc={selectedDoc}
                   allDocs={docs}
                   projectSlug={activeProjectSlug}
                   projectName={activeProject.name}
-                  onDocUpdated={() => loadProjectData(activeProjectSlug)}
-                  onDocDeleted={() => {
-                    loadProjectData(activeProjectSlug);
-                    handleNavigateHome();
-                  }}
                   onNavigateFolder={(cat) =>
                     handleSelectView({
                       type: "folder-overview",
@@ -375,7 +281,7 @@ const DocsApp: React.FC = () => {
                   <span className="text-4xl mb-3">📄</span>
                   <h2 className="text-base font-bold text-foreground">No documents published yet</h2>
                   <p className="text-xs text-muted-foreground mt-1 max-w-sm">
-                    This project does not have any public documentation pages created yet.
+                    This project does not have any documentation pages created yet.
                   </p>
                 </div>
               )}
@@ -394,62 +300,17 @@ const DocsApp: React.FC = () => {
                       docSlug: slug,
                     })
                   }
-                  onOpenNewDocModal={(cat) => handleOpenNewDocModal(cat)}
                   onNavigateHome={handleNavigateHome}
                 />
               )}
 
-              {/* 📜 AI Action Logs / Changelog Page */}
+              {/* 📜 AI Action Logs / Activity Changelog View */}
               {currentSelection.type === "logs" && (
                 <ActivityChangelog
                   projectSlug={activeProjectSlug}
                   projectName={activeProject.name}
                   logs={logs}
-                  featureKey={currentSelection.featureKey}
                   onRefresh={() => loadProjectData(activeProjectSlug)}
-                  onNavigateHome={handleNavigateHome}
-                />
-              )}
-
-              {/* Management Dashboard View (Only accessible when unlocked) */}
-              {currentSelection.type === "project-overview" && (
-                <ProjectOverview
-                  project={activeProject}
-                  docs={docs}
-                  features={features}
-                  onNavigateFolder={(category) =>
-                    handleSelectView({
-                      type: "folder-overview",
-                      projectSlug: activeProjectSlug,
-                      category,
-                    })
-                  }
-                  onNavigateDoc={(slug) =>
-                    handleSelectView({
-                      type: "doc",
-                      projectSlug: activeProjectSlug,
-                      docSlug: slug,
-                    })
-                  }
-                  onNavigateLogs={handleNavigateLogs}
-                  onOpenNewDocModal={handleOpenNewDocModal}
-                />
-              )}
-
-              {/* Features & Epics Roadmap */}
-              {currentSelection.type === "features" && (
-                <FeaturesRoadmap
-                  projectSlug={activeProjectSlug}
-                  projectName={activeProject.name}
-                  features={features}
-                  onSelectFeatureLogs={(featKey) =>
-                    handleSelectView({
-                      type: "logs",
-                      projectSlug: activeProjectSlug,
-                      featureKey: featKey,
-                    })
-                  }
-                  onNavigateHome={handleNavigateHome}
                 />
               )}
             </>
@@ -457,9 +318,7 @@ const DocsApp: React.FC = () => {
         </main>
       </div>
 
-      {/* 3. Global Modals & Auth Challenge */}
-      <AuthModal />
-
+      {/* 3. Global Search Modal */}
       <SearchModal
         isOpen={isSearchOpen}
         onClose={() => setIsSearchOpen(false)}
@@ -485,21 +344,6 @@ const DocsApp: React.FC = () => {
             projectSlug: activeProjectSlug,
           });
         }}
-      />
-
-      <NewDocModal
-        isOpen={isDocModalOpen}
-        onClose={() => setIsDocModalOpen(false)}
-        projectSlug={activeProjectSlug}
-        categories={activeProject.docs_categories || ["Architecture", "Backend", "Frontend", "Dashboard"]}
-        defaultCategory={docModalCategory}
-        onDocCreated={handleDocCreated}
-      />
-
-      <NewProjectModal
-        isOpen={isProjectModalOpen}
-        onClose={() => setIsProjectModalOpen(false)}
-        onProjectCreated={handleProjectCreated}
       />
     </div>
   );

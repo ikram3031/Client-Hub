@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { AlignLeft, ArrowUpRight, Edit3, MessageSquare } from "lucide-react";
+import { AlignLeft } from "lucide-react";
 
 export interface HeadingItem {
   id: string;
@@ -11,7 +11,6 @@ export interface HeadingItem {
 
 interface TableOfContentsProps {
   content: string;
-  onEditClick?: () => void;
 }
 
 // Extracts heading anchors and text from markdown source
@@ -35,10 +34,7 @@ const parseHeadings = (markdown: string): HeadingItem[] => {
 };
 
 // Right-sidebar Table of Contents displaying interactive heading navigation
-export const TableOfContents: React.FC<TableOfContentsProps> = ({
-  content,
-  onEditClick,
-}) => {
+export const TableOfContents: React.FC<TableOfContentsProps> = ({ content }) => {
   const [headings, setHeadings] = useState<HeadingItem[]>([]);
   const [activeId, setActiveId] = useState<string>("");
 
@@ -86,30 +82,6 @@ export const TableOfContents: React.FC<TableOfContentsProps> = ({
           </button>
         ))}
       </nav>
-
-      {/* Quick Community & Edit Actions */}
-      <div className="mt-8 pt-4 border-t border-border space-y-2 text-xs">
-        {onEditClick && (
-          <button
-            onClick={onEditClick}
-            className="flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-colors w-full text-left py-1 cursor-pointer"
-            type="button"
-          >
-            <Edit3 className="w-3.5 h-3.5" />
-            <span>Edit this page</span>
-          </button>
-        )}
-        <a
-          href="https://github.com"
-          target="_blank"
-          rel="noreferrer"
-          className="flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-colors py-1"
-        >
-          <MessageSquare className="w-3.5 h-3.5" />
-          <span>Documentation Feedback</span>
-          <ArrowUpRight className="w-3 h-3 ml-auto opacity-60" />
-        </a>
-      </div>
     </aside>
   );
 };

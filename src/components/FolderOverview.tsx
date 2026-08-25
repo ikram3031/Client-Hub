@@ -1,11 +1,8 @@
 "use client";
 
 import React from "react";
-import { Folder, FileText, Plus, ChevronRight, BookOpen, Clock } from "lucide-react";
+import { Folder, FileText, ChevronRight, BookOpen, Clock } from "lucide-react";
 import { DocItem } from "@/lib/api";
-import { useAuth } from "@/lib/auth";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 
 interface FolderOverviewProps {
@@ -14,7 +11,6 @@ interface FolderOverviewProps {
   category: string;
   docs: DocItem[];
   onSelectDoc: (slug: string) => void;
-  onOpenNewDocModal: (category: string) => void;
   onNavigateHome?: () => void;
 }
 
@@ -25,10 +21,8 @@ export const FolderOverview: React.FC<FolderOverviewProps> = ({
   category,
   docs,
   onSelectDoc,
-  onOpenNewDocModal,
   onNavigateHome,
 }) => {
-  const { requireAuth } = useAuth();
   const categoryDocs = docs.filter(
     (d) => d.category.toLowerCase() === category.toLowerCase()
   );
@@ -52,27 +46,18 @@ export const FolderOverview: React.FC<FolderOverviewProps> = ({
         </nav>
 
         {/* 2. Top Header */}
-        <div className="flex items-center justify-between pb-8 mb-8 border-b border-border">
-          <div className="flex items-center space-x-3.5">
-            <div className="p-3 bg-amber-500/10 text-amber-500 rounded-2xl border border-amber-500/20">
-              <Folder className="h-6 w-6" />
-            </div>
-            <div>
-              <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-foreground">
-                {category}
-              </h1>
-              <p className="text-xs md:text-sm text-muted-foreground mt-1">
-                {categoryDocs.length} documentation page{categoryDocs.length !== 1 ? "s" : ""} in this section
-              </p>
-            </div>
+        <div className="flex items-center space-x-3.5 pb-8 mb-8 border-b border-border">
+          <div className="p-3 bg-amber-500/10 text-amber-500 rounded-2xl border border-amber-500/20">
+            <Folder className="h-6 w-6" />
           </div>
-
-          <Button
-            onClick={() => requireAuth(() => onOpenNewDocModal(category))}
-          >
-            <Plus className="w-4 h-4 mr-1.5" />
-            <span>New {category} Doc</span>
-          </Button>
+          <div>
+            <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-foreground">
+              {category}
+            </h1>
+            <p className="text-xs md:text-sm text-muted-foreground mt-1">
+              {categoryDocs.length} documentation page{categoryDocs.length !== 1 ? "s" : ""} in this section
+            </p>
+          </div>
         </div>
 
         {/* 3. Document Cards Grid */}
@@ -81,16 +66,8 @@ export const FolderOverview: React.FC<FolderOverviewProps> = ({
             <BookOpen className="w-10 h-10 text-muted-foreground mb-3 opacity-50" />
             <h3 className="text-sm font-semibold text-foreground">No documents found in {category}</h3>
             <p className="text-xs text-muted-foreground mt-1 max-w-sm">
-              Create your first documentation page in this category to share architectural designs and guides.
+              Documents added via your automated workflow will appear here.
             </p>
-            <Button
-              variant="outline"
-              onClick={() => requireAuth(() => onOpenNewDocModal(category))}
-              className="mt-4"
-            >
-              <Plus className="w-3.5 h-3.5 mr-1" />
-              <span>Create Document</span>
-            </Button>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

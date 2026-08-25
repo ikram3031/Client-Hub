@@ -8,27 +8,20 @@ import {
   Check,
   Sparkles,
   FileCode,
-  Plus,
   RefreshCw,
   Search,
   Clock,
-  Lock,
 } from "lucide-react";
-import { ActionLog, postLog } from "@/lib/api";
-import { useAuth } from "@/lib/auth";
+import { ActionLog } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 
 interface ActivityChangelogProps {
   projectSlug: string;
   projectName?: string;
   logs: ActionLog[];
-  selectedScope?: string;
-  featureKey?: string;
   onRefresh: () => void;
-  onNavigateHome?: () => void;
 }
 
 // Maps scope names to variant colors
@@ -61,32 +54,17 @@ const formatLogDate = (dateString?: string): string => {
   });
 };
 
-// AI Action Logs changelog page rendering an elegant GitHub-style continuous release timeline
+// AI Action Logs changelog reader displaying chronological timeline of AI commits & prompts
 export const ActivityChangelog: React.FC<ActivityChangelogProps> = ({
   projectSlug,
   projectName,
   logs,
-  selectedScope = "all",
-  featureKey,
   onRefresh,
-  onNavigateHome,
 }) => {
-  const { isUnlocked, requireAuth } = useAuth();
-  const [activeScope, setActiveScope] = useState<string>(selectedScope);
+  const [activeScope, setActiveScope] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [expandedLogIds, setExpandedLogIds] = useState<Record<string, boolean>>({});
-
-  // Ingestion Modal State
-  const [showLogModal, setShowLogModal] = useState<boolean>(false);
-  const [summary, setSummary] = useState<string>("");
-  const [scope, setScope] = useState<string>("frontend");
-  const [action, setAction] = useState<string>("feature");
-  const [files, setFiles] = useState<string>("");
-  const [featKey, setFeatKey] = useState<string>(featureKey || "");
-  const [promptText, setPromptText] = useState<string>("");
-  const [commitHash, setCommitHash] = useState<string>("");
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   // Copies text to clipboard with temporary feedback state
   const handleCopyText = async (text: string, key: string) => {
@@ -104,39 +82,8 @@ export const ActivityChangelog: React.FC<ActivityChangelogProps> = ({
     setExpandedLogIds((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
-  // Submits a new AI action log directly to the server
-  const handleSubmitNewLog = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!summary.trim()) return;
-
-    setIsSubmitting(true);
-    try {
-      await postLog(projectSlug, {
-        summary,
-        scope,
-        action,
-        featureKey: featKey ? featKey.trim() : undefined,
-        changedFiles: files.split(",").map((f) => f.trim()).filter(Boolean),
-        promptUsed: promptText.trim() || undefined,
-        commitId: commitHash.trim() || undefined,
-      });
-
-      setSummary("");
-      setFiles("");
-      setPromptText("");
-      setCommitHash("");
-      setShowLogModal(false);
-      onRefresh();
-    } catch (err) {
-      console.error("Failed to submit action log:", err);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
   // Filters logs according to active scope and search query
   const filteredLogs = logs.filter((log) => {
-    if (featureKey && log.feature_key !== featureKey) return false;
     if (activeScope !== "all" && log.scope.toLowerCase() !== activeScope.toLowerCase()) return false;
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
@@ -158,42 +105,29 @@ export const ActivityChangelog: React.FC<ActivityChangelogProps> = ({
     <div className="flex-1 flex flex-col h-full overflow-y-auto custom-scrollbar font-sans bg-background text-foreground px-6 py-8 md:px-12 md:py-10">
       <div className="max-w-4xl w-full mx-auto pb-16">
         {/* 1. Header with Breadcrumb */}
-        <div className="flex items-center space-x-3 mb-8 pb-6 border-b border-border">
-          <div className="p-2.5 bg-primary/10 rounded-xl">
-            <Terminal className="h-6 w-6 text-primary" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between space-x-3 mb-8 pb-6 border-b border-border">
+          <div className="flex items-center space-x-3">
+            <div className="p-2.5 bg-primary/10 rounded-xl">
+              <Terminal className="h-6 w-6 text-primary" />
+            </div>
+            <div>
               <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-foreground">
                 AI Action Logs
               </h1>
-              {featureKey && (
-                <Badge variant="cyan">{featureKey}</Badge>
-              )}
+              <p className="text-xs md:text-sm text-muted-foreground mt-1">
+                Live changelog of AI modifications and architectural updates for {projectName || projectSlug}
+              </p>
             </div>
-            <p className="text-xs md:text-sm text-muted-foreground mt-1">
-              Live changelog of AI modifications and architectural updates for {projectName || projectSlug}
-            </p>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={onRefresh}
-              title="Refresh Logs"
-            >
-              <RefreshCw className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="default"
-              onClick={() => requireAuth(() => setShowLogModal(true))}
-              title={isUnlocked ? "Record New Action Log" : "Authenticate to Record Action Log"}
-            >
-              <Plus className="h-4 w-4 mr-1.5" />
-              <span>Record Log</span>
-            </Button>
-          </div>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={onRefresh}
+            title="Refresh Logs"
+          >
+            <RefreshCw className="h-4 w-4" />
+          </Button>
         </div>
 
         {/* 2. Filter Controls: Scope Tabs + Search */}
@@ -228,9 +162,9 @@ export const ActivityChangelog: React.FC<ActivityChangelogProps> = ({
         {filteredLogs.length === 0 ? (
           <div className="flex flex-col items-center justify-center p-12 rounded-2xl border border-dashed border-border bg-card text-center">
             <Terminal className="w-10 h-10 text-muted-foreground mb-3 opacity-50" />
-            <h3 className="text-sm font-semibold text-foreground">No activity logs found</h3>
+            <h3 className="text-sm font-semibold text-foreground">No activity logs recorded yet</h3>
             <p className="text-xs text-muted-foreground mt-1 max-w-sm">
-              No action logs matched your current filters. Record an action log or ingest one via CLI.
+              Logs recorded by your AI Assistant CLI workflow will automatically appear here.
             </p>
           </div>
         ) : (
@@ -354,137 +288,6 @@ export const ActivityChangelog: React.FC<ActivityChangelogProps> = ({
                 </div>
               );
             })}
-          </div>
-        )}
-
-        {/* 4. Ingestion Modal Dialog */}
-        {showLogModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-4 animate-in fade-in select-none">
-            <div className="w-full max-w-lg bg-card border border-border rounded-2xl shadow-2xl overflow-hidden font-sans animate-in zoom-in-95">
-              <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-muted/30">
-                <div className="flex items-center gap-2 text-foreground font-bold text-base">
-                  <Terminal className="w-4 h-4 text-primary" />
-                  <span>Record AI Action Log</span>
-                </div>
-                <button
-                  onClick={() => setShowLogModal(false)}
-                  className="p-1 rounded-lg text-muted-foreground hover:text-foreground transition-colors text-lg"
-                  type="button"
-                >
-                  ×
-                </button>
-              </div>
-
-              <form onSubmit={handleSubmitNewLog} className="p-6 space-y-4 text-xs">
-                <div>
-                  <label className="block text-[11px] font-semibold text-muted-foreground mb-1 uppercase font-mono">
-                    Summary / Action Title
-                  </label>
-                  <Input
-                    placeholder="e.g. Migrated user session storage to Cloudflare D1"
-                    value={summary}
-                    onChange={(e) => setSummary(e.target.value)}
-                    required
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div>
-                    <label className="block text-[11px] font-semibold text-muted-foreground mb-1 uppercase font-mono">
-                      Scope
-                    </label>
-                    <select
-                      value={scope}
-                      onChange={(e) => setScope(e.target.value)}
-                      className="w-full h-9 bg-background border border-border rounded-lg px-2.5 py-1 text-xs text-foreground focus:outline-none"
-                    >
-                      <option value="frontend">Frontend</option>
-                      <option value="backend">Backend</option>
-                      <option value="architecture">Architecture</option>
-                      <option value="dashboard">Dashboard</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-semibold text-muted-foreground mb-1 uppercase font-mono">
-                      Action Type
-                    </label>
-                    <select
-                      value={action}
-                      onChange={(e) => setAction(e.target.value)}
-                      className="w-full h-9 bg-background border border-border rounded-lg px-2.5 py-1 text-xs text-foreground focus:outline-none"
-                    >
-                      <option value="feature">Feature</option>
-                      <option value="bugfix">Bugfix</option>
-                      <option value="refactor">Refactor</option>
-                      <option value="config">Config</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-semibold text-muted-foreground mb-1 uppercase font-mono">
-                      Feature Key (Optional)
-                    </label>
-                    <Input
-                      placeholder="FEAT-1"
-                      value={featKey}
-                      onChange={(e) => setFeatKey(e.target.value)}
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-[11px] font-semibold text-muted-foreground mb-1 uppercase font-mono">
-                      Git Commit Hash (Optional)
-                    </label>
-                    <Input
-                      placeholder="e.g. f8e4d3a"
-                      value={commitHash}
-                      onChange={(e) => setCommitHash(e.target.value)}
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-semibold text-muted-foreground mb-1 uppercase font-mono">
-                      Changed Files (Comma-separated)
-                    </label>
-                    <Input
-                      placeholder="src/auth.ts, db/schema.sql"
-                      value={files}
-                      onChange={(e) => setFiles(e.target.value)}
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-semibold text-muted-foreground mb-1 uppercase font-mono">
-                    AI Prompt Used (Optional)
-                  </label>
-                  <Textarea
-                    rows={3}
-                    placeholder="AI prompt or instructions that executed this change..."
-                    value={promptText}
-                    onChange={(e) => setPromptText(e.target.value)}
-                  />
-                </div>
-
-                <div className="flex justify-end gap-2 pt-3 border-t border-border">
-                  <Button
-                    variant="outline"
-                    onClick={() => setShowLogModal(false)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? "Saving..." : "Save Log"}
-                  </Button>
-                </div>
-              </form>
-            </div>
           </div>
         )}
       </div>

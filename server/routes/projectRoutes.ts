@@ -131,3 +131,58 @@ projectRouter.get("/:projectSlug", async (req: Request, res: Response) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
+
+// 4. PUT /api/projects/:projectSlug - Update project metadata
+projectRouter.put("/:projectSlug", async (req: Request, res: Response) => {
+  try {
+    const projectSlug = req.params.projectSlug as string;
+    const { name, description, docsCategories, logScopes } = req.body;
+
+    const existing = await queryD1(`SELECT * FROM projects WHERE slug = ?`, [projectSlug]);
+    if (existing.length === 0) {
+      return res.status(404).json({ success: false, error: "Project not found" });
+    }
+
+    const current = existing[0];
+    const newName = name || current.name;
+    const newDesc = description !== undefined ? description : current.description;
+    const newCats = docsCategories ? JSON.stringify(docsCategories) : current.docs_categories;
+    const newScopes = logScopes ? JSON.stringify(logScopes) : current.log_scopes;
+
+    await queryD1(
+      `UPDATE projects SET name = ?, description = ?, docs_categories = ?, log_scopes = ?, updated_at = CURRENT_TIMESTAMP WHERE slug = ?`,
+      [newName, newDesc, newCats, newScopes, projectSlug]
+    );
+
+    const updated = await queryD1(`SELECT * FROM projects WHERE slug = ?`, [projectSlug]);
+    res.json({
+      success: true,
+      project: {
+        ...updated[0],
+        docsCategories: JSON.parse(updated[0].docs_categories || "[]"),
+        logScopes: JSON.parse(updated[0].log_scopes || "[]"),
+      },
+    });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// 5. DELETE /api/projects/:projectSlug - Delete project and cascade records
+projectRouter.delete("/:projectSlug", async (req: Request, res: Response) => {
+  try {
+    const projectSlug = req.params.projectSlug as string;
+    await Promise.all([
+      queryD1(`DELETE FROM logs WHERE project_slug = ?`, [projectSlug]),
+      queryD1(`DELETE FROM subtasks WHERE project_slug = ?`, [projectSlug]),
+      queryD1(`DELETE FROM features WHERE project_slug = ?`, [projectSlug]),
+      queryD1(`DELETE FROM docs WHERE project_slug = ?`, [projectSlug]),
+      queryD1(`DELETE FROM projects WHERE slug = ?`, [projectSlug]),
+    ]);
+
+    res.json({ success: true, message: `Project ${projectSlug} deleted successfully` });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+

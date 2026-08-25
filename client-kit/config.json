@@ -1,0 +1,25 @@
+{
+  "hubApiUrl": "http://localhost:5000",
+  "project": {
+    "name": "docsNlogs",
+    "slug": "docsnlogs",
+    "description": "Centralized AI Documentation & Action Logs Tracking Hub"
+  },
+  "docs": {
+    "categories": [
+      "Architecture",
+      "Backend",
+      "Frontend",
+      "Dashboard"
+    ]
+  },
+  "logs": {
+    "scopes": [
+      "frontend",
+      "backend",
+      "architecture",
+      "dashboard"
+    ],
+    "autoCommit": true
+  }
+}

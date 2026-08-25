@@ -1,5 +1,6 @@
 import { Router, Request, Response } from "express";
 import { queryD1 } from "../config/d1";
+import { randomUUID } from "crypto";
 
 export const logRouter = Router({ mergeParams: true });
 
@@ -115,11 +116,16 @@ logRouter.post("/", async (req: Request, res: Response) => {
     let finalSummary = parsed ? parsed.description : rawMessage;
 
     // If no LogID provided, calculate next sequential ID based on scope (e.g. AB01, AD01, AA01)
+    const prefix = getScopePrefix(finalScope);
     if (!finalLogId) {
-      const prefix = getScopePrefix(finalScope);
       finalLogId = await getNextSequentialLogId(projectSlug, prefix);
     } else {
       finalLogId = String(finalLogId).toUpperCase().trim();
+      // Check if provided Log ID is already in use in this project; if so, assign next available ID
+      const existing = await queryD1(`SELECT id FROM logs WHERE project_slug = ? AND id = ?`, [projectSlug, finalLogId]);
+      if (existing.length > 0) {
+        finalLogId = await getNextSequentialLogId(projectSlug, prefix);
+      }
     }
 
     const cleanFeatureKey = featureKey ? String(featureKey).toUpperCase() : null;
@@ -132,7 +138,7 @@ logRouter.post("/", async (req: Request, res: Response) => {
       if (featExists.length === 0) {
         await queryD1(
           `INSERT INTO features (id, project_slug, key, scope, title, description, status) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-          [finalLogId, projectSlug, cleanFeatureKey, finalScope.toLowerCase(), `Feature ${cleanFeatureKey}`, "Auto-created by AI Log Ingestion", "in_progress"]
+          [randomUUID(), projectSlug, cleanFeatureKey, finalScope.toLowerCase(), `Feature ${cleanFeatureKey}`, "Auto-created by AI Log Ingestion", "in_progress"]
         );
       }
     }
@@ -143,7 +149,7 @@ logRouter.post("/", async (req: Request, res: Response) => {
       if (taskExists.length === 0) {
         await queryD1(
           `INSERT INTO subtasks (id, project_slug, key, feature_key, title, status, notes) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-          [finalLogId, projectSlug, cleanSubTaskKey, cleanFeatureKey, `Task ${cleanSubTaskKey}`, "in_progress", "Auto-created by AI Log Ingestion"]
+          [randomUUID(), projectSlug, cleanSubTaskKey, cleanFeatureKey, `Task ${cleanSubTaskKey}`, "in_progress", "Auto-created by AI Log Ingestion"]
         );
       }
     }
@@ -176,3 +182,17 @@ logRouter.post("/", async (req: Request, res: Response) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
+
+// 3. DELETE /api/projects/:projectSlug/logs/:logId - Delete single log entry
+logRouter.delete("/:logId", async (req: Request, res: Response) => {
+  try {
+    const projectSlug = req.params.projectSlug as string;
+    const logId = req.params.logId as string;
+
+    await queryD1(`DELETE FROM logs WHERE project_slug = ? AND id = ?`, [projectSlug, logId]);
+    res.json({ success: true, message: `Log ${logId} deleted successfully` });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+

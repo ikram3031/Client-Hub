@@ -1,33 +1,43 @@
 # 📖 docsNlogs: Centralized AI Documentation & Action Logs Hub
 
-Welcome to **docsNlogs**, a lightweight developer workspace and central documentation/AI action logging system powered by **Cloudflare D1 (Serverless SQLite at Edge)**.
+Welcome to **docsNlogs**, a lightweight developer workspace and centralized AI documentation & action logging system powered by **Cloudflare D1 (Serverless SQLite at the Edge)**.
 
 ---
 
 ## ⚡ Quick Start (Running the Hub)
 
-### 1. Run Frontend & Backend Concurrently
-To start both the **Next.js Frontend (Port 3000)** and **Express API Backend (Port 5000)** with one command:
+### 1. Run Standalone Backend & Web Viewer
+To start the Hub on port **5000**:
 
 ```bash
 npm run dev
+# or
+npm start
 ```
 
-- 🌐 **Frontend Dashboard:** [http://localhost:3000](http://localhost:3000)
-- 🚀 **Backend API:** [http://localhost:5000](http://localhost:5000)
+- 🌐 **Web Viewer UI:** [http://localhost:5000](http://localhost:5000)
+- 🚀 **REST API Base:** [http://localhost:5000/api](http://localhost:5000/api)
 - 🔍 **Health Check:** `http://localhost:5000/api/health`
 
 ---
 
 ## 🔌 Plug & Play in Any Client / White-Label Project
 
-You can integrate `docsNlogs` into any of your external client projects, white-label apps, or ERPs in 2 simple steps:
+You can integrate `docsNlogs` into any of your external client projects, white-label apps, or ERPs:
 
-### Step 1: Initialize Configuration (Interactive Wizard)
-Run the interactive setup wizard from the project root:
+### Step 1: Copy `client-kit/` to Target Project
+Copy the `client-kit/` folder into your client project root and add it to `.gitignore`:
+
+```gitignore
+/client-kit/
+/.config/
+```
+
+### Step 2: Initialize Configuration (Interactive Wizard)
+Run the interactive setup wizard inside your client project:
 
 ```bash
-node scripts/init-config.js
+node client-kit/init.js
 ```
 
 The CLI will prompt you for:
@@ -36,72 +46,57 @@ The CLI will prompt you for:
 3. **Description**
 4. **Hub API URL** (Default: `http://localhost:5000` or your VPS URL)
 5. **Initial Documentation Categories** (`Architecture, Backend, Frontend, Dashboard`)
-6. **Action Log Scopes** (`frontend, backend, dashboard`)
-
-> ✨ This automatically creates `.config/config.json` and registers/onboards the project into Cloudflare D1.
+6. **Action Log Scopes** (`frontend, backend, architecture, dashboard`)
 
 ---
 
-### Step 2: Push AI Action Logs
+### Step 3: Push AI Action Logs
+
 Whenever you or your AI coding assistant make code changes, run:
 
 ```bash
-node scripts/log.js --scope backend --feat FEAT-1 --task TASK-1-1 --summary "Added Stripe Webhook handler" --files "src/api/webhook.ts"
-```
+# Automated: reads latest git commit, hash, and changed files
+node client-kit/log.js
 
-#### Minimal Usage:
-```bash
-node scripts/log.js --summary "Fixed navigation bar padding bug"
+# Positional standard commit format
+node client-kit/log.js "AB01(feat): added Stripe Webhook handler"
+
+# Explicit CLI flags
+node client-kit/log.js --scope backend --action feat --summary "Added Stripe Webhook handler" --files "src/api/webhook.ts"
 ```
 
 #### CLI Flags:
 | Flag | Description | Example |
 |---|---|---|
 | `--summary` | **(Required)** Brief summary of the change | `--summary "Added JWT auth"` |
-| `--scope` | Target scope (`backend`, `frontend`, `dashboard`) | `--scope backend` |
+| `--scope` | Target scope (`backend`, `frontend`, `architecture`) | `--scope backend` |
+| `--action` | Action type (`feat`, `fix`, `refc`, `docs`, `config`) | `--action feat` |
 | `--feat` | JIRA-style Feature ID / Epic key | `--feat FEAT-1` |
 | `--task` | JIRA-style Subtask ID | `--task TASK-1-1` |
-| `--action` | Action type (`feature`, `bugfix`, `refactor`, `config`) | `--action bugfix` |
 | `--files` | Comma-separated modified files | `--files "src/auth.ts,src/db.ts"` |
 | `--prompt` | AI prompt or instructions used | `--prompt "Fix token expiry"` |
 
 ---
 
-## 🗄️ Database Management & Diagnostic Scripts
+## 🗄️ Database Management Scripts
 
 ### 1. Check Database Health & Table Counts
 Verify live Cloudflare D1 connection, table rows, and registered projects:
 
 ```bash
-npx tsx server/check-db.ts
+npm run check-db
 ```
 
 ### 2. Reset and Re-seed Hub Database
-Wipe all tables and re-initialize the default `docsNlogs` project with Architecture, Backend, and Frontend docs:
+Wipe all tables and re-initialize the default `docsNlogs` project:
 
 ```bash
-npx tsx server/reset-db.ts
-```
-
----
-
-## 🏗️ Architecture & Hierarchy (JIRA Style)
-
-```
-Project (e.g. "docsNlogs", "client-erp")
-│
-├── 📚 Docs (Categories: Architecture, Backend, Frontend, Dashboard)
-│     └── Markdown Content & Code Snippets
-│
-└── 📝 JIRA-Style Features & Tasks
-      └── Epic / Feature (e.g. FEAT-101: "Auth System")
-            └── Sub-topic / Task (e.g. TASK-101-1: "JWT Middleware")
-                  └── AI Action Logs (Summary, Diff, Files, Prompts)
+npm run reset-db
 ```
 
 ---
 
 ## 🤖 AI Assistant Rule (Copy to your client projects)
-Add this prompt rule to your client projects so your AI assistant logs changes automatically:
+Add this prompt rule to your client projects or instruct your AI assistant to read `client-kit/AI_INSTRUCTIONS.md`:
 
-> *"After making any architectural decisions, bug fixes, or completing new features, run `node scripts/log.js --summary '<Short description>' --scope <frontend|backend> --files '<comma_separated_files>'` to keep our central docsNlogs hub synchronized."*
+> *"After making any architectural decisions, bug fixes, or completing new features, run `node client-kit/log.js` to keep our central docsNlogs hub synchronized."*

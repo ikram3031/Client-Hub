@@ -122,7 +122,7 @@ export const initD1Schema = async () => {
   // 5. Action / AI Logs Table
   await queryD1(`
     CREATE TABLE IF NOT EXISTS logs (
-      id TEXT PRIMARY KEY,
+      id TEXT NOT NULL,
       project_slug TEXT NOT NULL,
       scope TEXT NOT NULL,
       feature_key TEXT,
@@ -133,15 +133,10 @@ export const initD1Schema = async () => {
       changed_files TEXT DEFAULT '[]',
       diff_summary TEXT DEFAULT '',
       commit_id TEXT DEFAULT '',
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (project_slug, id)
     );
   `);
-
-  try {
-    await queryD1(`ALTER TABLE logs ADD COLUMN commit_id TEXT DEFAULT ''`);
-  } catch (e) {
-    // Column already exists or table freshly created
-  }
 
   console.log("✅ [Cloudflare D1] Schema initialized successfully!");
 };

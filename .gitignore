@@ -28,3 +28,8 @@ yarn-error.log*
 *.sw?
 .vscode/
 .idea/
+
+# Local Credentials
+Credentials.md
+Credentials*.md
+

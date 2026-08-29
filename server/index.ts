@@ -9,28 +9,42 @@ import { projectRouter } from "./routes/projectRoutes";
 import { docRouter } from "./routes/docRoutes";
 import { featureRouter } from "./routes/featureRoutes";
 import { logRouter } from "./routes/logRoutes";
+import { fleetRouter } from "./routes/fleetRoutes";
+import { ticketRouter } from "./routes/ticketRoutes";
+import { billingRouter } from "./routes/billingRoutes";
 
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5000;
 
 // Middlewares
 app.use(
   cors({
     origin: "*",
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept", "x-hub-secret", "x-hub-signature", "x-client-key"],
   })
 );
 app.use(express.json({ limit: "10mb" }));
 
 // Health Check
 app.get("/api/health", (_req, res) => {
-  res.json({ status: "ok", engine: "Cloudflare D1 (SQLite)", timestamp: new Date().toISOString() });
+  res.json({
+    service: "plexivia-clienthub-gateway",
+    status: "ok",
+    engine: "Cloudflare D1 (Serverless SQLite at Edge)",
+    storage: "Cloudflare R2",
+    timestamp: new Date().toISOString(),
+  });
 });
 
-// Master Projects API
+// Master Fleet & Infrastructure APIs
+app.use("/api/fleet", fleetRouter);
+app.use("/api/tickets", ticketRouter);
+app.use("/api/billing", billingRouter);
+
+// Master Projects & Docs/Logs APIs
 app.use("/api/projects", projectRouter);
 
 // Project-Specific Sub-Routes

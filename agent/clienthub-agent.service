@@ -1,0 +1,21 @@
+﻿[Unit]
+Description=ClientHub VPS Sidecar Telemetry & Task Daemon
+After=network.target docker.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/decantre
+Environment=NODE_ENV=production
+Environment=CLIENT_KEY=decantre
+Environment=CENTRAL_HUB_URL=http://144.79.218.241:5000
+Environment=HUB_SECRET=wlecom-fleet-secret
+Environment=AGENT_POLL_INTERVAL_MS=30000
+ExecStart=/usr/bin/node agent/index.js
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

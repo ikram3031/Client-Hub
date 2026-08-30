@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import path from "path";
+import fs from "fs";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
 import { initD1Schema } from "./config/d1";
@@ -85,27 +86,41 @@ const startServer = async () => {
     // 1. Initialize Cloudflare D1 tables
     await initD1Schema();
 
-    // 2. Setup Vite SPA Middleware or Static Production Serve
-    if (process.env.NODE_ENV !== "production") {
-      const vite = await createViteServer({
-        server: { middlewareMode: true },
-        appType: "spa",
-      });
-      app.use(vite.middlewares);
-    } else {
-      const distPath = path.join(process.cwd(), "dist");
-      app.use(express.static(distPath));
-      app.use((req, res, next) => {
-        if (req.method === "GET" && !req.path.startsWith("/api/")) {
-          return res.sendFile(path.join(distPath, "index.html"));
+    // 2. Setup Static Multi-App Serving
+    const adminDist = path.join(process.cwd(), "web-apps/admin/dist");
+    const clientDist = path.join(process.cwd(), "web-apps/client/dist");
+    const docsDist = path.join(process.cwd(), "web-apps/docsNlogs/dist");
+    const rootDist = path.join(process.cwd(), "dist");
+
+    // Admin Dashboard (/admin)
+    if (fs.existsSync(adminDist)) {
+      app.use("/admin", express.static(adminDist));
+      app.get("/admin*", (_req, res) => res.sendFile(path.join(adminDist, "index.html")));
+    }
+
+    // Client Portal (/client)
+    if (fs.existsSync(clientDist)) {
+      app.use("/client", express.static(clientDist));
+      app.get("/client*", (_req, res) => res.sendFile(path.join(clientDist, "index.html")));
+    }
+
+    // Docs & Logs Main Hub (/)
+    const mainDocsDist = fs.existsSync(docsDist) ? docsDist : rootDist;
+    if (fs.existsSync(mainDocsDist)) {
+      app.use(express.static(mainDocsDist));
+      app.get("*", (req, res, next) => {
+        if (req.path.startsWith("/api/") || req.path.startsWith("/admin") || req.path.startsWith("/client")) {
+          return next();
         }
-        next();
+        res.sendFile(path.join(mainDocsDist, "index.html"));
       });
     }
 
     app.listen(PORT, "0.0.0.0", () => {
       console.log(`🚀 [Server] Centralized AI Docs & Logs Hub running on http://localhost:${PORT}`);
-      console.log(`📖 [Docs Engine] Vite React Documentation App ready at http://localhost:${PORT}`);
+      console.log(`👑 [Admin Panel] Super-Admin Fleet Hub at http://localhost:${PORT}/admin`);
+      console.log(`🤝 [Client Portal] Client Self-Service at http://localhost:${PORT}/client`);
+      console.log(`📖 [Docs Engine] Documentation App at http://localhost:${PORT}/`);
       console.log(`📡 [API] REST Endpoints available at http://localhost:${PORT}/api`);
     });
   } catch (error) {

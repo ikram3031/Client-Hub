@@ -1,4 +1,4 @@
-﻿FROM node:20-alpine AS builder
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
@@ -17,6 +17,7 @@ COPY . .
 RUN npm run build:server
 RUN npm run build:admin
 RUN npm run build:client
+RUN npm run build:docs
 
 EXPOSE 5000
 

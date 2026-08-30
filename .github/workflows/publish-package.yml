@@ -30,6 +30,7 @@ jobs:
         run: npm run build:kit
 
       - name: Publish to GitHub Packages
-        run: npm publish --prefix client-kit
+        working-directory: ./client-kit
+        run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

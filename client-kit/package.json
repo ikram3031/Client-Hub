@@ -1,5 +1,5 @@
 {
-  "name": "@ikram3031/clienthub-kit",
+  "name": "@plexivia-dev/clienthub-kit",
   "version": "1.0.0",
   "description": "Embedded SDK, CLI Logger, and VPS Telemetry Agent for ClientHub",
   "main": "./dist/index.js",
@@ -54,11 +54,11 @@
     "vps-monitor",
     "react-sdk"
   ],
-  "author": "ikram3031",
+  "author": "Plexivia",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/ikram3031/Client-Hub.git"
+    "url": "https://github.com/Plexivia-dev/Client-Hub.git"
   },
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"

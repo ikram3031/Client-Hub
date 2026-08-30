@@ -1,4 +1,4 @@
-﻿name: Publish ClientHub Kit to GitHub Packages
+name: Publish ClientHub Kit to GitHub Packages
 
 on:
   release:
@@ -21,7 +21,7 @@ jobs:
         with:
           node-version: "20"
           registry-url: "https://npm.pkg.github.com"
-          scope: "@ikram3031"
+          scope: "@plexivia-dev"
 
       - name: Install dependencies
         run: npm install

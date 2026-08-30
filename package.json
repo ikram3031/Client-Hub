@@ -10,7 +10,7 @@
   ],
   "scripts": {
     "server": "tsx server/index.ts",
-    "build:server": "esbuild server/index.ts --bundle --platform=node --target=node20 --format=esm --outfile=dist-server/index.js --external:express --external:cors --external:dotenv --external:@google/genai --external:vite",
+    "build:server": "esbuild server/index.ts --bundle --platform=node --target=node20 --format=esm --outfile=dist-server/index.js --packages=external",
     "start": "node dist-server/index.js",
     "dev:admin": "npm run dev --prefix web-apps/admin",
     "dev:client": "npm run dev --prefix web-apps/client",

@@ -1,5 +1,6 @@
 {
-  "hubApiUrl": "http://localhost:5000",
+  "hubApiUrl": "http://144.79.218.241:5000",
+  "localHubApiUrl": "http://localhost:5000",
   "project": {
     "name": "docsNlogs",
     "slug": "docsnlogs",

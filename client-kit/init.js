@@ -98,7 +98,7 @@ const runWizard = async () => {
   const defaultSlug = projectName.toLowerCase().replace(/[^a-z0-9_-]/g, "-");
   const projectSlug = await ask(rl, "2. Project Slug / ID", defaultSlug);
   const description = await ask(rl, "3. Project Description", "Full-stack application with AI logging");
-  const hubApiUrl = await ask(rl, "4. Central Hub API URL", "http://localhost:5000");
+  const hubApiUrl = await ask(rl, "4. Central Hub API URL", "http://144.79.218.241:5000");
 
   // 2. Gather Doc Categories & Scopes
   const rawCategories = await ask(

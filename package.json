@@ -6,7 +6,8 @@
   "workspaces": [
     "web-apps/admin",
     "web-apps/client",
-    "web-apps/docsNlogs"
+    "web-apps/docsNlogs",
+    "client-kit"
   ],
   "scripts": {
     "server": "tsx server/index.ts",
@@ -18,7 +19,8 @@
     "build:admin": "npm run build --prefix web-apps/admin",
     "build:client": "npm run build --prefix web-apps/client",
     "build:docs": "npm run build --prefix web-apps/docsNlogs",
-    "build:all": "npm run build:server && npm run build:admin && npm run build:client && npm run build:docs"
+    "build:kit": "npm run build --prefix client-kit",
+    "build:all": "npm run build:server && npm run build:admin && npm run build:client && npm run build:docs && npm run build:kit"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
@@ -30,10 +32,12 @@
   "devDependencies": {
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
-    "@types/node": "^22.13.4",
+    "@types/node": "^22.20.1",
     "@types/nodemailer": "^8.0.1",
+    "@types/react": "^19.2.18",
     "esbuild": "^0.25.0",
+    "tsup": "^8.5.1",
     "tsx": "^4.19.3",
-    "typescript": "^5.7.3"
+    "typescript": "^5.9.3"
   }
 }

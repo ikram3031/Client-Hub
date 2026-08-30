@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+!/usr/bin/env node
 
 /**
  * 🛠️ Interactive Setup Wizard for docsNlogs Client Configuration

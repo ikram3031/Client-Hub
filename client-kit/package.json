@@ -1,0 +1,66 @@
+{
+  "name": "@ikram3031/clienthub-kit",
+  "version": "1.0.0",
+  "description": "Embedded SDK, CLI Logger, and VPS Telemetry Agent for ClientHub",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "clienthub-log": "./cli/log.js",
+    "clienthub-init": "./cli/init.js",
+    "clienthub-agent": "./agent/bin.js"
+  },
+  "files": [
+    "dist",
+    "cli",
+    "agent",
+    "config.default.json",
+    "README.md",
+    "AI_INSTRUCTIONS.md"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./react": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "lint": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "react": ">=17.0.0",
+    "react-dom": ">=17.0.0"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    },
+    "react-dom": {
+      "optional": true
+    }
+  },
+  "keywords": [
+    "clienthub",
+    "telemetry",
+    "action-logger",
+    "vps-monitor",
+    "react-sdk"
+  ],
+  "author": "ikram3031",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ikram3031/Client-Hub.git"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  }
+}

@@ -1,4 +1,4 @@
-﻿import { Router } from "express";
+import { Router } from "express";
 import { queryD1 } from "../config/d1";
 import { randomUUID } from "crypto";
 

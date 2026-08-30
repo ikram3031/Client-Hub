@@ -1,54 +1,91 @@
-# 📦 docsNlogs AI Client Kit
+﻿# 📦 @ikram3031/clienthub-kit
 
-A zero-dependency, drop-in utility that connects any Git repository to the centralized **docsNlogs Hub**.
+> **All-in-one Embedded SDK, Rich AI Action Logger CLI, and VPS Telemetry Agent for ClientHub.**
+
+Seamlessly integrate live VPS telemetry monitoring, AI action audit logs, and direct engineering support into your React dashboards and Node.js applications.
 
 ---
 
-## ⚡ Quick 60-Second Setup in Any Project
-
-### Step 1: Copy `client-kit/` to your target project
-Copy the entire `client-kit/` folder into your project root.
-
-### Step 2: Add to `.gitignore`
-Add the following line to your target project's `.gitignore` file so it doesn't pollute the client repo:
-
-```gitignore
-/client-kit/
-/.config/
-```
-
-### Step 3: Initialize Configuration
-Run the interactive onboarding wizard:
+## 🚀 1. Installation
 
 ```bash
-node client-kit/init.js
+# In your client project repository:
+npm install @ikram3031/clienthub-kit --save-dev
 ```
 
 ---
 
-## 🤖 Tell Your AI Assistant (Antigravity, Gemini, Claude, Cursor)
+## 📊 2. Embedded React SDK (Dashboard Integration)
 
-Add this instruction to your AI assistant's system prompt or ask the assistant to read:
-👉 [`client-kit/AI_INSTRUCTIONS.md`](./AI_INSTRUCTIONS.md)
+Embed the full ClientHub suite into any React / Next.js / Vite dashboard with just 2 lines of code:
 
-> *"After making code changes or committing to git, execute `node client-kit/log.js` to automatically log your changes and commit tags to our central docsNlogs hub."*
+```tsx
+import React from "react";
+import { ClientHubPanel } from "@ikram3031/clienthub-kit/react";
+
+export const SystemToolsPage = () => {
+  return (
+    <div className="p-6">
+      <ClientHubPanel
+        hubUrl="http://144.79.218.241:5000"
+        clientKey="decantre"
+        projectSlug="wl-ecom"
+        pollIntervalMs={15000}
+      />
+    </div>
+  );
+};
+```
+
+### Standalone React Components Available:
+- `<VpsMonitor telemetry={data} onRefresh={refetch} />` — Live gauges for CPU, RAM RSS, Disk Usage, Uptime, and DB health.
+- `<ActionLogFeed logs={logs} onOpenWriter={openModal} />` — Searchable, filterable changelog timeline.
+- `<LogWriterModal isOpen={isOpen} onClose={close} onSubmit={addLog} />` — Interactive dialog to record actions directly from UI.
+- `<SupportDeskWidget hubUrl={url} clientKey={key} />` — In-app issue ticket creator & status tracker.
+
+### Custom React Hooks:
+```tsx
+import { useClientHubTelemetry, useClientHubLogs } from "@ikram3031/clienthub-kit/react";
+
+const { telemetry, loading, refetch } = useClientHubTelemetry({
+  hubUrl: "http://144.79.218.241:5000",
+  clientKey: "decantre",
+});
+
+const { logs, addLog } = useClientHubLogs({
+  hubUrl: "http://144.79.218.241:5000",
+  projectSlug: "wl-ecom",
+});
+```
 
 ---
 
-## 🚀 CLI Logger Usage
+## 📝 3. AI Action Logger CLI (`clienthub-log`)
 
-### 1. Automatic Ingestion (Reads latest git commit & changed files)
+AI coding agents and developers can record structured audit logs directly to the central hub:
+
 ```bash
-node client-kit/log.js
+npx clienthub-log "AB01(feat): Add MongoDB multi-tenant index" \
+  --reqs "- Improve order query performance on high concurrency" \
+  --changes "- OrderModel.js: Added compound index on tenantId and createdAt" \
+  --notes "Tested on staging. Latency dropped from 120ms to 6ms."
 ```
 
-### 2. Standard Commit Format
+---
+
+## 🤖 4. VPS Telemetry Daemon (`clienthub-agent`)
+
+Run a lightweight background daemon on your VPS to automatically stream CPU, RAM, and Disk metrics to the central Fleet Hub:
+
 ```bash
-node client-kit/log.js "AB01(feat): add user authentication middleware"
-node client-kit/log.js "AD02(fix): resolve mobile menu overflow bug"
+# Start the background daemon
+npx clienthub-agent start
+
+# Or test telemetry collection once
+npx clienthub-agent test
 ```
 
-### 3. Explicit Flags
-```bash
-node client-kit/log.js --scope backend --action feat --summary "Add Stripe webhook" --files "src/webhook.ts" --prompt "Handle stripe event"
-```
+---
+
+## 📄 License
+MIT © ikram3031

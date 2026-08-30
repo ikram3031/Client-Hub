@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+!/usr/bin/env node
 
 /**
  * 🤖 docsNlogs Zero-Dependency AI Action Logger Client CLI

@@ -1,5 +1,5 @@
 ﻿import React, { useEffect, useState } from "react";
-import { useClientStore } from "../store/useClientStore";
+import { useClientStore, SupportTicket } from "../store/useClientStore";
 import { ReportIssueModal } from "../components/ReportIssueModal";
 import {
   LifeBuoy,
@@ -9,21 +9,29 @@ import {
   CreditCard,
   Server,
   ExternalLink,
+  Clock,
+  MessageSquare,
   ShieldCheck,
+  RefreshCw,
 } from "lucide-react";
 
 export const ClientDashboard: React.FC = () => {
-  const { clientKey, clientInfo, setClientKey, fetchClientStatus } = useClientStore();
+  const { clientKey, clientInfo, tickets, setClientKey, fetchClientStatus, fetchClientTickets } = useClientStore();
   const [modalOpen, setModalOpen] = useState(false);
 
   useEffect(() => {
     fetchClientStatus();
+    fetchClientTickets();
+    const interval = setInterval(() => {
+      fetchClientTickets();
+    }, 20000);
+    return () => clearInterval(interval);
   }, []);
 
   return (
     <div className="space-y-6">
       {/* ── Client Selector Bar ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-zinc-900/60 border border-zinc-800 p-4 rounded-xl">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-zinc-900/60 border border-zinc-800 p-4 rounded-2xl">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-indigo-600/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 font-bold font-mono">
             {clientKey.slice(0, 2).toUpperCase()}
@@ -57,7 +65,7 @@ export const ClientDashboard: React.FC = () => {
 
       {/* ── Hosting Renewal Warning Banner (If Expiring) ── */}
       {clientInfo?.showWarningBanner && (
-        <div className="bg-amber-950/40 border border-amber-500/30 rounded-xl p-4 flex items-start gap-3 shadow-lg animate-in fade-in duration-300">
+        <div className="bg-amber-950/40 border border-amber-500/30 rounded-2xl p-4 flex items-start gap-3 shadow-lg animate-in fade-in duration-300">
           <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
           <div className="flex-1 text-xs text-amber-200">
             <h3 className="font-bold text-sm text-amber-300">⚠️ হোস্টিং রিনিউয়াল রিমাইন্ডার</h3>
@@ -76,7 +84,7 @@ export const ClientDashboard: React.FC = () => {
       {clientInfo?.customAlerts?.map((alert: any) => (
         <div
           key={alert.id}
-          className="bg-indigo-950/40 border border-indigo-500/30 rounded-xl p-4 flex items-start gap-3 text-xs text-indigo-200 shadow-md"
+          className="bg-indigo-950/40 border border-indigo-500/30 rounded-2xl p-4 flex items-start gap-3 text-xs text-indigo-200 shadow-md"
         >
           <CheckCircle2 className="w-5 h-5 text-indigo-400 shrink-0 mt-0.5" />
           <div>
@@ -86,10 +94,10 @@ export const ClientDashboard: React.FC = () => {
         </div>
       ))}
 
-      {/* ── Infrastructure & Support Quick Action ── */}
+      {/* ── Support & System Health Row ── */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Support Card */}
-        <div className="bg-zinc-900/80 border border-zinc-800 rounded-xl p-6 flex flex-col justify-between shadow-lg">
+        {/* Support Action Card */}
+        <div className="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-6 flex flex-col justify-between shadow-lg">
           <div>
             <div className="w-12 h-12 rounded-xl bg-indigo-600/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 mb-4">
               <LifeBuoy className="w-6 h-6" />
@@ -110,7 +118,7 @@ export const ClientDashboard: React.FC = () => {
         </div>
 
         {/* System Health Card */}
-        <div className="bg-zinc-900/80 border border-zinc-800 rounded-xl p-6 flex flex-col justify-between shadow-lg">
+        <div className="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-6 flex flex-col justify-between shadow-lg">
           <div>
             <div className="w-12 h-12 rounded-xl bg-emerald-600/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mb-4">
               <Server className="w-6 h-6" />
@@ -148,6 +156,80 @@ export const ClientDashboard: React.FC = () => {
             <span className="text-emerald-400 font-semibold">SSL 256-bit Encrypted</span>
           </div>
         </div>
+      </div>
+
+      {/* ── My Support Requests & Status List ── */}
+      <div className="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-6 shadow-xl space-y-4">
+        <div className="flex items-center justify-between pb-3 border-b border-zinc-800">
+          <div className="flex items-center gap-2.5">
+            <MessageSquare className="w-5 h-5 text-indigo-400" />
+            <h2 className="text-base font-bold text-white">My Support Tickets & History</h2>
+          </div>
+          <button
+            onClick={() => fetchClientTickets()}
+            className="text-xs text-zinc-400 hover:text-zinc-200 flex items-center gap-1.5 transition font-medium"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            Refresh
+          </button>
+        </div>
+
+        {tickets.length === 0 ? (
+          <div className="py-8 text-center text-zinc-500 text-xs">
+            No support tickets submitted yet. If you encounter any issues, click "Report an Issue" above.
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {tickets.map((t) => (
+              <div
+                key={t.id}
+                className="bg-zinc-950/60 border border-zinc-800/80 hover:border-zinc-700/80 rounded-xl p-4 transition text-xs space-y-2"
+              >
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-mono font-bold text-zinc-400">#{t.id}</span>
+                    <h3 className="font-bold text-white text-sm">{t.title}</h3>
+                    <span className="px-2 py-0.5 bg-zinc-800 text-zinc-400 rounded text-[11px] uppercase font-semibold">
+                      {t.category.replace("_", " ")}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase flex items-center gap-1 ${
+                        t.status === "resolved"
+                          ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                          : t.status === "in_progress"
+                          ? "bg-indigo-500/10 text-indigo-400 border border-indigo-500/20"
+                          : "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                      }`}
+                    >
+                      {t.status === "resolved" ? (
+                        <CheckCircle2 className="w-3 h-3" />
+                      ) : (
+                        <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
+                      )}
+                      {t.status.replace("_", " ")}
+                    </span>
+                    <span className="text-zinc-500 font-mono text-[11px] flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      {t.createdAt ? t.createdAt.slice(0, 10) : ""}
+                    </span>
+                  </div>
+                </div>
+
+                <p className="text-zinc-300 leading-relaxed whitespace-pre-wrap">{t.description}</p>
+
+                {t.resolutionNotes && (
+                  <div className="mt-2 p-2.5 bg-emerald-950/30 border border-emerald-800/40 rounded-lg text-emerald-300">
+                    <span className="font-bold text-emerald-200">Engineer Response / Resolution:</span>{" "}
+                    {t.resolutionNotes}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <ReportIssueModal isOpen={modalOpen} onClose={() => setModalOpen(false)} />

@@ -11,6 +11,8 @@
 
 dist/
 **/dist/
+dist-server/
+**/dist-server/
 build/
 **/build/
 .next/

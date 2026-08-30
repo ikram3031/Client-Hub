@@ -10,13 +10,15 @@
   ],
   "scripts": {
     "server": "tsx server/index.ts",
+    "build:server": "esbuild server/index.ts --bundle --platform=node --target=node20 --format=esm --outfile=dist-server/index.js --external:express --external:cors --external:dotenv --external:@google/genai --external:vite",
+    "start": "node dist-server/index.js",
     "dev:admin": "npm run dev --prefix web-apps/admin",
     "dev:client": "npm run dev --prefix web-apps/client",
     "dev:docs": "npm run dev --prefix web-apps/docsNlogs",
     "build:admin": "npm run build --prefix web-apps/admin",
     "build:client": "npm run build --prefix web-apps/client",
     "build:docs": "npm run build --prefix web-apps/docsNlogs",
-    "build:all": "npm run build:admin && npm run build:client && npm run build:docs"
+    "build:all": "npm run build:server && npm run build:admin && npm run build:client && npm run build:docs"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
@@ -28,6 +30,7 @@
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
     "@types/node": "^22.13.4",
+    "esbuild": "^0.25.0",
     "tsx": "^4.19.3",
     "typescript": "^5.7.3"
   }

@@ -1,0 +1,19 @@
+﻿services:
+  clienthub-gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: clienthub-gateway-live
+    restart: always
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+      - PORT=5000
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"

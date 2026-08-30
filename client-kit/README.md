@@ -1,4 +1,4 @@
-﻿# 📦 @ikram3031/clienthub-kit
+﻿# 📦 @plexivia-dev/clienthub-kit
 
 > **All-in-one Embedded SDK, Rich AI Action Logger CLI, and VPS Telemetry Agent for ClientHub.**
 
@@ -10,7 +10,7 @@ Seamlessly integrate live VPS telemetry monitoring, AI action audit logs, and di
 
 ```bash
 # In your client project repository:
-npm install @ikram3031/clienthub-kit --save-dev
+npm install @plexivia-dev/clienthub-kit --save-dev
 ```
 
 ---
@@ -21,7 +21,7 @@ Embed the full ClientHub suite into any React / Next.js / Vite dashboard with ju
 
 ```tsx
 import React from "react";
-import { ClientHubPanel } from "@ikram3031/clienthub-kit/react";
+import { ClientHubPanel } from "@plexivia-dev/clienthub-kit/react";
 
 export const SystemToolsPage = () => {
   return (
@@ -45,7 +45,7 @@ export const SystemToolsPage = () => {
 
 ### Custom React Hooks:
 ```tsx
-import { useClientHubTelemetry, useClientHubLogs } from "@ikram3031/clienthub-kit/react";
+import { useClientHubTelemetry, useClientHubLogs } from "@plexivia-dev/clienthub-kit/react";
 
 const { telemetry, loading, refetch } = useClientHubTelemetry({
   hubUrl: "http://144.79.218.241:5000",
@@ -88,4 +88,4 @@ npx clienthub-agent test
 ---
 
 ## 📄 License
-MIT © ikram3031
+MIT © Plexivia

@@ -1,6 +1,6 @@
 {
   "name": "@plexivia-dev/clienthub-kit",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Embedded SDK, CLI Logger, and VPS Telemetry Agent for ClientHub",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",

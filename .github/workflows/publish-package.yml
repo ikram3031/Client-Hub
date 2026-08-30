@@ -1,0 +1,35 @@
+﻿name: Publish ClientHub Kit to GitHub Packages
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          registry-url: "https://npm.pkg.github.com"
+          scope: "@ikram3031"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build client-kit SDK
+        run: npm run build:kit
+
+      - name: Publish to GitHub Packages
+        run: npm publish --prefix client-kit
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

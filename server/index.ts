@@ -12,6 +12,8 @@ import { logRouter } from "./routes/logRoutes";
 import { fleetRouter } from "./routes/fleetRoutes";
 import { ticketRouter } from "./routes/ticketRoutes";
 import { billingRouter } from "./routes/billingRoutes";
+import { userRouter } from "./routes/userRoutes";
+import { releaseRouter } from "./routes/releaseRoutes";
 
 dotenv.config();
 
@@ -39,7 +41,9 @@ app.get("/api/health", (_req, res) => {
   });
 });
 
-// Master Fleet & Infrastructure APIs
+// Master Core Collections & Infrastructure APIs
+app.use("/api/users", userRouter);
+app.use("/api/releases", releaseRouter);
 app.use("/api/fleet", fleetRouter);
 app.use("/api/tickets", ticketRouter);
 app.use("/api/billing", billingRouter);

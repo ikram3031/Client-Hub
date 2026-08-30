@@ -34,3 +34,6 @@ yarn-error.log*
 
 Credentials.md
 Credentials*.md
+
+*.tsbuildinfo
+tsconfig.tsbuildinfo

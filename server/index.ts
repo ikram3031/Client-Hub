@@ -14,6 +14,7 @@ import { ticketRouter } from "./routes/ticketRoutes";
 import { billingRouter } from "./routes/billingRoutes";
 import { userRouter } from "./routes/userRoutes";
 import { releaseRouter } from "./routes/releaseRoutes";
+import { mailRouter } from "./routes/mailRoutes";
 
 dotenv.config();
 
@@ -47,6 +48,7 @@ app.use("/api/releases", releaseRouter);
 app.use("/api/fleet", fleetRouter);
 app.use("/api/tickets", ticketRouter);
 app.use("/api/billing", billingRouter);
+app.use("/api/mail", mailRouter);
 
 // Master Projects & Docs/Logs APIs
 app.use("/api/projects", projectRouter);

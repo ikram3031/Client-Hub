@@ -1,20 +1,28 @@
-﻿import dotenv from "dotenv";
+import dotenv from "dotenv";
 
 dotenv.config();
 
-const ACCOUNT_ID = process.env.CLOUDFLARE_ACCOUNT_ID || "";
-const API_TOKEN = process.env.CLOUDFLARE_API_TOKEN || "";
-const DATABASE_ID = process.env.CLOUDFLARE_D1_DATABASE_ID || "";
+// Dynamic D1 Query Endpoint Resolver
+const getD1ApiUrl = () => {
+  const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
+  const dbId = process.env.CLOUDFLARE_D1_DATABASE_ID;
+  return `https://api.cloudflare.com/client/v4/accounts/${accountId}/d1/database/${dbId}/query`;
+};
 
-const D1_API_URL = `https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/d1/database/${DATABASE_ID}/query`;
+const getApiToken = () => {
+  return process.env.CLOUDFLARE_API_TOKEN || "";
+};
 
 // Executes SQL Query on Cloudflare D1 via REST API
 export const queryD1 = async <T = any>(sql: string, params: any[] = []): Promise<T[]> => {
   try {
-    const response = await fetch(D1_API_URL, {
+    const url = getD1ApiUrl();
+    const token = getApiToken();
+
+    const response = await fetch(url, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${API_TOKEN}`,
+        Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
